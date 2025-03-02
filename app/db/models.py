@@ -1,0 +1,38 @@
+﻿import enum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import BigInteger, DateTime,Boolean, Enum,String
+from typing import Optional
+from app.db.database import Base
+
+
+class User(Base):
+    class Role(enum.Enum):
+        admin = "admin"
+        user = "user"
+
+    telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, nullable=False)
+    username: Mapped[Optional[str]] = mapped_column(String, default=None)
+    first_name: Mapped[Optional[str]] = mapped_column(String, default=None)
+    promo_code: Mapped[str] = mapped_column(String, default=None,nullable=True)
+    subscription_end : Mapped[DateTime] = mapped_column(DateTime, default=None,nullable=True)
+    is_blocked:Mapped[bool] = mapped_column(Boolean, default=False)
+    role: Mapped[Role] = mapped_column(Enum(Role), default=Role.user)
+
+class ConnectedEntity(Base):
+    class EntityType(enum.Enum):
+        channel = 'channel'
+        group = 'group'
+    entity_id: Mapped[int] = mapped_column(BigInteger, default=None)
+    entity_type: Mapped[EntityType] = mapped_column(Enum(EntityType), default=None)
+    last_message_id: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+class ForwardedMessage(Base):
+    entity_id: Mapped[int] = mapped_column(BigInteger, default=None)
+    message_id: Mapped[int] = mapped_column(BigInteger, default=None)
+    sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    
+class Promocode(Base):
+    promo_name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    duration: Mapped[int] 
+    usage_limit: Mapped[int]
+    used_count: Mapped[int]= mapped_column(BigInteger, default=0)

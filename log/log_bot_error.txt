@@ -1,0 +1,32 @@
+2025-03-02 at 03:13:58 | ERROR | Ошибка при запросе оплаты: 4 validation errors for SendMessage
+reply_markup.InlineKeyboardMarkup
+  Input should be a valid dictionary or instance of InlineKeyboardMarkup [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardMarkup
+  Input should be a valid dictionary or instance of ReplyKeyboardMarkup [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardRemove
+  Input should be a valid dictionary or instance of ReplyKeyboardRemove [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ForceReply
+  Input should be a valid dictionary or instance of ForceReply [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+2025-03-02 at 03:28:40 | ERROR | Бот остановлен!
+2025-03-02 at 03:31:01 | ERROR | Бот остановлен!
+2025-03-02 at 03:31:27 | ERROR | Ошибка при запросе оплаты: 4 validation errors for SendMessage
+reply_markup.InlineKeyboardMarkup
+  Input should be a valid dictionary or instance of InlineKeyboardMarkup [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardMarkup
+  Input should be a valid dictionary or instance of ReplyKeyboardMarkup [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardRemove
+  Input should be a valid dictionary or instance of ReplyKeyboardRemove [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ForceReply
+  Input should be a valid dictionary or instance of ForceReply [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+2025-03-02 at 03:31:55 | ERROR | Бот остановлен!
+2025-03-02 at 04:14:49 | ERROR | Бот остановлен!
+2025-03-02 at 04:17:05 | ERROR | Бот остановлен!
+2025-03-02 at 04:17:58 | ERROR | Бот остановлен!

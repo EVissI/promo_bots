@@ -1,0 +1,48 @@
+2025-03-02 at 03:07:59 | INFO | Бот успешно запущен.
+2025-03-02 at 03:08:29 | INFO | Поиск одной записи users по фильтрам: {'telegram_id': 455205382}
+2025-03-02 at 03:08:29 | INFO | Запись найдена по фильтрам: {'telegram_id': 455205382}
+2025-03-02 at 03:13:50 | INFO | Поиск одной записи users по фильтрам: {'telegram_id': 455205382}
+2025-03-02 at 03:13:50 | INFO | Запись найдена по фильтрам: {'telegram_id': 455205382}
+2025-03-02 at 03:13:58 | ERROR | Ошибка при запросе оплаты: 4 validation errors for SendMessage
+reply_markup.InlineKeyboardMarkup
+  Input should be a valid dictionary or instance of InlineKeyboardMarkup [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardMarkup
+  Input should be a valid dictionary or instance of ReplyKeyboardMarkup [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardRemove
+  Input should be a valid dictionary or instance of ReplyKeyboardRemove [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ForceReply
+  Input should be a valid dictionary or instance of ForceReply [type=model_type, input_value=[[InlineKeyboardButton(te...k_game=None, pay=None)]], input_type=list]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+2025-03-02 at 03:28:40 | ERROR | Бот остановлен!
+2025-03-02 at 03:30:04 | INFO | Бот успешно запущен.
+2025-03-02 at 03:31:01 | ERROR | Бот остановлен!
+2025-03-02 at 03:31:23 | INFO | Бот успешно запущен.
+2025-03-02 at 03:31:27 | ERROR | Ошибка при запросе оплаты: 4 validation errors for SendMessage
+reply_markup.InlineKeyboardMarkup
+  Input should be a valid dictionary or instance of InlineKeyboardMarkup [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardMarkup
+  Input should be a valid dictionary or instance of ReplyKeyboardMarkup [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ReplyKeyboardRemove
+  Input should be a valid dictionary or instance of ReplyKeyboardRemove [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+reply_markup.ForceReply
+  Input should be a valid dictionary or instance of ForceReply [type=model_type, input_value=<aiogram.utils.keyboard.I...t at 0x000002389EFD2990>, input_type=InlineKeyboardBuilder]
+    For further information visit https://errors.pydantic.dev/2.10/v/model_type
+2025-03-02 at 03:31:55 | ERROR | Бот остановлен!
+2025-03-02 at 03:32:05 | INFO | Бот успешно запущен.
+2025-03-02 at 03:34:22 | INFO | Поиск одной записи users по фильтрам: {'telegram_id': 7293584623}
+2025-03-02 at 03:34:22 | INFO | Запись не найдена по фильтрам: {'telegram_id': 7293584623}
+2025-03-02 at 03:34:22 | INFO | Добавление записи users с параметрами: {'telegram_id': 7293584623, 'username': 'Ebezin2', 'first_name': '*', 'promo_code': None, 'subscription_end': None, 'is_blocked': False, 'role': <Role.user: 'user'>}
+2025-03-02 at 03:34:22 | INFO | Запись users успешно добавлена.
+2025-03-02 at 03:35:02 | INFO | Поиск одной записи users по фильтрам: {'telegram_id': 7293584623}
+2025-03-02 at 03:35:02 | INFO | Запись найдена по фильтрам: {'telegram_id': 7293584623}
+2025-03-02 at 04:14:49 | ERROR | Бот остановлен!
+2025-03-02 at 04:15:24 | INFO | Бот успешно запущен.
+2025-03-02 at 04:17:05 | ERROR | Бот остановлен!
+2025-03-02 at 04:17:14 | INFO | Бот успешно запущен.
+2025-03-02 at 04:17:58 | ERROR | Бот остановлен!
