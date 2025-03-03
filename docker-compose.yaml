@@ -2,9 +2,7 @@
   telegram_bot:
     build: .
     container_name: promo_bot
-    command: 
-      -alembic upgrade head 
-      -python -m app.aiogram.main
+    command: /bin/sh -c "alembic upgrade head && python -m app.aiogram.main"
     ports:
       - "2432:2432"
     env_file:
