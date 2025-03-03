@@ -28,4 +28,4 @@ admin.add_view(UserView(User, sync_session,name = 'Юзеры'))
 admin.add_view(PromoView(Promocode, sync_session,name = 'Промокоды'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=2434)

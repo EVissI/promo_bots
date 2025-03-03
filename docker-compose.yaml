@@ -12,7 +12,7 @@
     
   telegram_user_bot:
     build: .
-    container_name: promo_bot
+    container_name: promo_user_bot
     command:  python -m app.telethon.user-bot
     ports:
       - "2433:2433"
@@ -24,7 +24,7 @@
       
   flask_admin:
     build: .
-    container_name: promo_bot
+    container_name: flask_admin
     command:  python -m app.flask_admin.app 
     ports:
       - "2434:2434"
@@ -32,7 +32,6 @@
       - .env
     depends_on:
       - db
-      - telegram_bot
   db:
     image: postgres
     restart: always
@@ -44,7 +43,7 @@
       - pgdata:/var/lib/postgresql/data 
     ports:
       - "5432:5432"
- 
+    
   adminer:
     image: adminer
     restart: always

@@ -88,6 +88,6 @@ venv/
 .vscode/
 
 #logs
-log
+log/
 
 .session
