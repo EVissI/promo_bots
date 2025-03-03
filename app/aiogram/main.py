@@ -72,62 +72,64 @@ async def check_subscriptions():
             for user_info in users:
                 user_id = user_info.telegram_id
                 subscription_end = user_info.subscription_end
-                if subscription_end <= current_date:
-                    user_info.promo_code = None
-                    user_info.subscription_end = None
-                    async with async_session_maker() as session:
-                        await UserDAO.update(
-                            session=session,
-                            filters=TelegramIDModel(telegram_id=user_info.telegram_id),
-                            values=UserModel.model_validate(user_info.to_dict()),
-                        )
-                    try:
-                        await bot.send_message(
-                            user_id,
-                            "Ваша подписка истекла. Введите новый промокод для продления.",
-                        )
-                    except TelegramForbiddenError:
-                        user_info.is_blocked = True
+                if subscription_end:
+                    if subscription_end <= current_date:
+                        user_info.promo_code = None
+                        user_info.subscription_end = None
                         async with async_session_maker() as session:
                             await UserDAO.update(
                                 session=session,
                                 filters=TelegramIDModel(telegram_id=user_info.telegram_id),
                                 values=UserModel.model_validate(user_info.to_dict()),
                             )
-                        logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
-                # Напоминания перед окончанием подписки
-                else:
-                    try:
-                        days_left = (subscription_end - current_date).days
-                        if days_left == 3:
+                        try:
                             await bot.send_message(
                                 user_id,
-                                "Ваша подписка истекает через 3 дня. Пожалуйста, продлите подписку. Your subscription expires in 3 days. Please renew your subscription.",
+                                "Ваша подписка истекла. Введите новый промокод для продления.",
                             )
-                        elif days_left == 2:
-                            await bot.send_message(
-                                user_id,
-                                "Ваша подписка истекает через 2 дня. Пожалуйста, продлите подписку. Your subscription expires in 2 days. Please renew your subscription.",
-                            )
-                        elif days_left == 1:
-                            await bot.send_message(
-                                user_id,
-                                "Ваша подписка истекает завтра. Пожалуйста, продлите подписку. Your subscription expires tomorrow. Please renew your subscription.",
-                            )
-                        elif days_left == 0:
-                            await bot.send_message(
-                                user_id,
-                                "Ваша подписка истекает сегодня. Пожалуйста, продлите подписку. Your subscription expires today. Please renew your subscription.",
-                            )
-                    except TelegramForbiddenError:
-                        user_info.is_blocked = True
-                        async with async_session_maker() as session:
-                            await UserDAO.update(
-                                session=session,
-                                filters=TelegramIDModel(telegram_id=user_info.telegram_id),
-                                values=UserModel.model_validate(user_info.to_dict()),
-                            )
-                        logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
+                        except TelegramForbiddenError:
+                            user_info.is_blocked = True
+                            async with async_session_maker() as session:
+                                await UserDAO.update(
+                                    session=session,
+                                    filters=TelegramIDModel(telegram_id=user_info.telegram_id),
+                                    values=UserModel.model_validate(user_info.to_dict()),
+                                )
+                            logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
+                    # Напоминания перед окончанием подписки
+                    else:
+                        try:
+                            days_left = (subscription_end - current_date).days
+                            match days_left:
+                                case 3:
+                                    await bot.send_message(
+                                        user_id,
+                                        "Ваша подписка истекает через 3 дня. Пожалуйста, продлите подписку. Your subscription expires in 3 days. Please renew your subscription.",
+                                    )
+                                case 2:
+                                    await bot.send_message(
+                                        user_id,
+                                        "Ваша подписка истекает через 2 дня. Пожалуйста, продлите подписку. Your subscription expires in 2 days. Please renew your subscription.",
+                                    )
+                                case 1:
+                                    await bot.send_message(
+                                        user_id,
+                                        "Ваша подписка истекает завтра. Пожалуйста, продлите подписку. Your subscription expires tomorrow. Please renew your subscription.",
+                                    ) 
+                                case 0:
+                                    await bot.send_message(
+                                        user_id,
+                                        "Ваша подписка истекает сегодня. Пожалуйста, продлите подписку. Your subscription expires today. Please renew your subscription.",
+                                    )
+                        except TelegramForbiddenError:
+                            user_info.is_blocked = True
+                            async with async_session_maker() as session:
+                                await UserDAO.update(
+                                    session=session,
+                                    filters=TelegramIDModel(telegram_id=user_info.telegram_id),
+                                    values=UserModel.model_validate(user_info.to_dict()),
+                                )
+                            logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
         except Exception as e:
             logger.error(f"Ошибка при отправке состояния подписки: {str(e)}")
         # Запускаем проверку раз в день

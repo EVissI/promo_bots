@@ -42,7 +42,7 @@
     volumes:
       - pgdata:/var/lib/postgresql/data 
     ports:
-      - "5432:5432"
+      - "5466:5466"
     
   adminer:
     image: adminer
