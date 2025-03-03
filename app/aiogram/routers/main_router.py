@@ -33,7 +33,7 @@ async def cmd_start(message: Message, session, **kwargs):
             session=session, filters=TelegramIDModel(telegram_id=user_id)
         )
         if user_info:
-            msg = start_message(message.from_user.first_name)
+            msg = start_message("Приветик")
             await message.answer(msg, reply_markup=MainKeyboard.build_main_kb())
             return
         if user_id in admins:
@@ -61,7 +61,7 @@ async def cmd_start(message: Message, session, **kwargs):
                 role=User.Role.user,
             )
         await UserDAO.add(session=session, values=values)
-        msg = start_message(message.from_user.first_name)
+        msg = start_message(message.from_user.first_name, MainKeyboard.get_user_kb_texts().get('oplata'))
         await message.answer(msg, reply_markup=MainKeyboard.build_main_kb())
         for admin in admins:
             await bot.send_message(admin,f'К тебе зашел новый юзер {message.from_user.first_name} [id: {message.from_user.id}]')
