@@ -12,6 +12,7 @@ from app.flask_admin.model_views import UserView,PromoView
 
 
 app = Flask(__name__)
+
 app.config['SECRET_KEY'] = 'AJKClasc6x5z1i2S3Kx3zcdo23'
 app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
@@ -27,4 +28,4 @@ admin.add_view(UserView(User, sync_session,name = 'Юзеры'))
 admin.add_view(PromoView(Promocode, sync_session,name = 'Промокоды'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)

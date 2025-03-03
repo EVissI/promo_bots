@@ -1,4 +1,4 @@
 ﻿ python -m app.telethon.user-bot
- python -m app.flask_admin.app
+ python -m app.flask_admin.app 
  python -m app.aiogram.main
  alembic revision --autogenerate -m "create_base"

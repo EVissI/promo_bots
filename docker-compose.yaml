@@ -1,4 +1,38 @@
 ﻿services:
+  telegram_bot:
+    build: .
+    container_name: promo_bot
+    command:  python -m app.aiogram.main
+    ports:
+      - "2432:2432"
+    env_file:
+      - .env
+    depends_on:
+      - db
+    
+  telegram_user_bot:
+    build: .
+    container_name: promo_bot
+    command:  python -m app.telethon.user-bot
+    ports:
+      - "2433:2433"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - telegram_bot
+      
+  flask_admin:
+    build: .
+    container_name: promo_bot
+    command:  python -m app.flask_admin.app 
+    ports:
+      - "2434:2434"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - telegram_bot
   db:
     image: postgres
     restart: always
@@ -11,14 +45,14 @@
     ports:
       - "5432:5432"
  
-  pgadmin:
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.org
-      PGADMIN_DEFAULT_PASSWORD: root
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+  adminer:
+    image: adminer
+    restart: always
     ports:
-      - "5050:80"
- 
+      - 8777:8777
+
 volumes:
   pgdata:
+networks:
+  app_network:
+    driver: bridge

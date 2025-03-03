@@ -39,5 +39,5 @@ async def cmd_send_promo(message: Message, command: CommandObject, session, **kw
         return
     await bot.send_message(
         user.telegram_id,
-        f"Ваш промокод: {promo.promo_name} \n Для активации подписки нажмите кнопку \'{MainKeyboard.get_user_kb_texts('activate_promo')}\'",
+        f"Ваш промокод: <code>{promo.promo_name}</code> \nДля активации подписки нажмите кнопку \'{MainKeyboard.get_user_kb_texts().get('activate_promo')}\'"
     )

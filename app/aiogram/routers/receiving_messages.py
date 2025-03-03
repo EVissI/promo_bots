@@ -105,7 +105,7 @@ async def distribute_telethon_media(media_files,session,**kwargs):
     async def send_media_to_user(media_files:list[dict],user:User):
         try:
             for media in media_files:
-                await asyncio.sleep(1)
+                await asyncio.sleep(1) #рекомендуймая задержка чтоб не словить таймаут
                 file_id = media.get('file_id')
                 match media.get('media_type'):
                     case 'photo':
@@ -117,7 +117,7 @@ async def distribute_telethon_media(media_files,session,**kwargs):
         except TelegramForbiddenError:
             logger.info(f'юзер {user.telegram_id} заблокировал бота')
             user.is_blocked = True
-            await UserDAO.update(session,filters=TelegramIDModel(user.telegram_id),values=TelegramIDModel.model_validate(user))
+            await UserDAO.update(session,filters=TelegramIDModel(telegram_id=user.telegram_id),values=TelegramIDModel.model_validate(user))
         except RateLimitError as e:
             logger.warning(f"RateLimitError при отправке видео заметки пользователю {user.id}: подождите {e.seconds} секунд.")
             await asyncio.sleep(e.seconds)
@@ -131,8 +131,8 @@ async def distribute_telethon_media(media_files,session,**kwargs):
         if users:
             for user in users:
                 task.append(send_media_to_user(media_files,user))
-        batch_size = 10
+        number_of_users_received_media = 20 #выше 30 ставить нельзя
         while task:
-            current_batch = task[:batch_size]
-            task = task[batch_size:]
+            current_batch = task[:number_of_users_received_media]
+            task = task[number_of_users_received_media:]
             await asyncio.gather(*current_batch)

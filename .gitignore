@@ -159,8 +159,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-log.txt
-log_error.txt
+
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
@@ -175,3 +174,6 @@ log_error.txt
 .pypirc
 
 .vscode
+
+log/
+.session

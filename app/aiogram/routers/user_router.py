@@ -18,7 +18,7 @@ from app.config import bot, admins, settings
 user_router = Router()
 
 
-@user_router.message(F.text == MainKeyboard.get_user_kb_texts().get("activate_promo"),Command('activate_promo'))
+@user_router.message(F.text == MainKeyboard.get_user_kb_texts().get("activate_promo"))
 async def cmd_activate_promo(message: Message, state: FSMContext):
     await message.answer("Введите промокод", reply_markup=del_kbd)
     await state.set_state(ActivatePromoState.promo)
@@ -52,7 +52,7 @@ async def process_activate_promo(
             aproved_promo = promo
 
         if not aproved_promo:
-            await message.answer('Такого промокода не существует',reply_markup=MainKeyboard.build_main_kb())
+            await message.answer('Промокода не существует',reply_markup=MainKeyboard.build_main_kb())
             await state.clear()
             return
         
@@ -103,7 +103,7 @@ async def process_activate_promo(
         await state.clear()
 
 
-@user_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_sub'),Command('check_sub'))
+@user_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_sub'))
 async def check_subscription(message: Message, state: FSMContext):
     try:
         async with async_session_maker() as session:
@@ -138,7 +138,7 @@ async def check_subscription(message: Message, state: FSMContext):
         logger.error(f'Ошибка при проверке подписки пользователем {message.from_user.first_name} [{message.from_user.id}]: {str(e)}')
         await message.answer('Что-то пошло не так', reply_markup=MainKeyboard.build_main_kb())
 
-@user_router.message(F.text == MainKeyboard.get_user_kb_texts().get('oplata'),Command('oplata'))
+@user_router.message(F.text == MainKeyboard.get_user_kb_texts().get('oplata'))
 async def process_payment(message: Message, state: FSMContext):
     try:
         await message.answer(
@@ -166,7 +166,7 @@ async def process_payment_screenshot(message: Message, state: FSMContext):
         await bot.send_photo(
             settings.ADMIN_GROUP_ID,
             message.photo[-1].file_id,
-            caption=f"Новая оплата от пользователя {message.from_user.first_name} (ID: {message.from_user.id})"
+            caption=f"Новая оплата от пользователя {message.from_user.first_name} (ID: <code>{message.from_user.id}</code>)"
         )
         await message.answer(
             "Спасибо! Ваш платеж будет проверен администратором, после чего мы пришлем вам промокод",
