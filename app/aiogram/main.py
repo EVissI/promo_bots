@@ -72,7 +72,6 @@ async def check_subscriptions():
             for user_info in users:
                 user_id = user_info.telegram_id
                 subscription_end = user_info.subscription_end
-                logger.info(type(subscription_end))
                 if subscription_end is not None:
                     if subscription_end <= current_date:
                         user_info.promo_code = None
