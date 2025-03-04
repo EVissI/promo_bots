@@ -7,7 +7,7 @@ from loguru import logger
 from app.aiogram.common.states import ActivatePromoState,PaymentStates
 from app.aiogram.keyboards.inline_kb import oplata_kb
 from app.aiogram.keyboards.markup_kb import MainKeyboard, del_kbd
-from aiogram.filters import StateFilter
+from aiogram.filters import StateFilter,Command,CommandObject
 from aiogram.fsm.context import FSMContext
 from app.db.dao import UserDAO, PromocodeDAO, Promocode, User
 from app.db.database import async_session_maker
@@ -29,50 +29,41 @@ async def process_activate_promo(
 ):
     try:
         async with async_session_maker() as session:
-            all_promocodes: list[Promocode] = await PromocodeDAO.find_all(
-                session=session, filters=PromocodeFilter()
-            )
+            promo_info:Promocode = await PromocodeDAO.find_one_or_none(session=session,filters=PromocodeFilter(promo_name=message.text))
             user_info: User = await UserDAO.find_one_or_none(
                 session=session, filters=TelegramIDModel(telegram_id=message.from_user.id)
             )
         logger.info(user_info)
-        user_input_promocode = message.text
-        aproved_promo = None
-        for promo in all_promocodes:
-            if user_input_promocode != promo.promo_name:
-                continue
-            elif user_info.promo_code == message.text:
+        if user_info.promo_code == promo_info.promo_name:
                 await message.answer(
                     "Вы уже использовали этот промокод",
                     reply_markup=MainKeyboard.build_main_kb(),
                 )
                 await state.clear()
                 return
-            aproved_promo = promo
-
-        if not aproved_promo:
+        if not promo_info:
             await message.answer('Промокода не существует',reply_markup=MainKeyboard.build_main_kb())
             await state.clear()
             return
         
         
-        aproved_promo.used_count += 1
-        user_info.promo_code = aproved_promo.promo_name
+        promo_info.used_count += 1
+        user_info.promo_code = promo_info.promo_name
 
         current_date = datetime.now()
-        end_date = current_date + timedelta(days=aproved_promo.duration)
+        end_date = current_date + timedelta(days=promo_info.duration)
         user_info.subscription_end = end_date
         async with async_session_maker() as session:
-            if aproved_promo.used_count == aproved_promo.usage_limit:
+            if promo_info.used_count == promo_info.usage_limit:
                 await PromocodeDAO.delete(
                     session=session,
-                    filters=PromocodeFilter(promo_name=aproved_promo.promo_name),
+                    filters=PromocodeFilter(promo_name=promo_info.promo_name),
                 )
             else:
                 await PromocodeDAO.update(
                     session=session,
-                    filters=PromocodeFilter(promo_name=aproved_promo.promo_name),
-                    values=PromocodeModel.model_validate(aproved_promo.to_dict()),
+                    filters=PromocodeFilter(promo_name=promo_info.promo_name),
+                    values=PromocodeModel.model_validate(promo_info.to_dict()),
                 )
         async with async_session_maker() as session:
             await UserDAO.update(
@@ -92,7 +83,7 @@ async def process_activate_promo(
                     else f"пользователь {user_info.first_name}(id: {user_info.telegram_id})"
                 )
                 await bot.send_message(
-                    admin, msg + f' зарегистрировал промокод {aproved_promo.promo_name}'
+                    admin, msg + f' зарегистрировал промокод {promo_info.promo_name}'
                 )
             except TelegramNotFound:
                 logger.error(f'Рутовский администратор[{admin}] не найдет, скоректир скорректируйте .env файл')
@@ -176,4 +167,58 @@ async def process_payment_screenshot(message: Message, state: FSMContext):
         await state.clear()
     except Exception as e:
         logger.error(f'Ошибка при обработке скриншота: {e}')
+        await message.answer('Что-то пошло не так', reply_markup=MainKeyboard.build_main_kb())
+
+@user_router.message(Command('activate_promo'))
+async def cmd_activate_promo(message: Message, command: CommandObject):
+    try:
+        if command.args is None:
+            await message.answer("Ошибка: не передан промокод")
+            return
+        if command.args.count(' ') > 1:
+            await message.answer("Ошибка: слишком много аргументов")
+            return
+        promo = command.args
+
+        async with async_session_maker() as session:
+            promo_info:Promocode = await PromocodeDAO.find_one_or_none(session=session,filters=PromocodeFilter(promo_name=promo))
+            if promo_info is None:
+                await message.answer("Ошибка: промокода не существует")
+                return
+            user_info:User  = await UserDAO.find_one_or_none(session=session,filters=TelegramIDModel(telegram_id=message.from_user.id))
+            if promo_info.promo_name == user_info.promo_code:
+                await message.answer(
+                    "Вы уже использовали этот промокод",
+                )
+                return
+        promo_info.used_count += 1
+        user_info.promo_code = promo_info.promo_name
+
+        current_date = datetime.now()
+        end_date = current_date + timedelta(days=promo_info.duration)
+        user_info.subscription_end = end_date
+        async with async_session_maker() as session:
+            if promo_info.used_count == promo_info.usage_limit:
+                await PromocodeDAO.delete(
+                    session=session,
+                    filters=PromocodeFilter(promo_name=promo_info.promo_name),
+                )
+            else:
+                await PromocodeDAO.update(
+                    session=session,
+                    filters=PromocodeFilter(promo_name=promo_info.promo_name),
+                    values=PromocodeModel.model_validate(promo_info.to_dict()),
+                )
+        async with async_session_maker() as session:
+            await UserDAO.update(
+                session=session,
+                filters=TelegramIDModel(telegram_id=message.from_user.id),
+                values= UserModel.model_validate(user_info.to_dict())
+            )
+        await message.answer(
+            f"Промокод успешно активирован, подписка кончится: {end_date.date()}",reply_markup= MainKeyboard.build_main_kb()
+        )
+        
+    except Exception as e:
+        logger.error(f'Ошибка при активации промкода коммандой: {e}')
         await message.answer('Что-то пошло не так', reply_markup=MainKeyboard.build_main_kb())

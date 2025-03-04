@@ -23,7 +23,7 @@ async def cmd_send_promo(message: Message, command: CommandObject, session, **kw
     except ValueError:
         await message.answer(
             "Ошибка: неправильный формат команды. Пример:\n"
-            "/settimer <time> <message>"
+            "/send_promo <id> <promo>"
         )
         return
 

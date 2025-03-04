@@ -19,9 +19,7 @@ from app.db.shemas import UserFilterModel, TelegramIDModel, UserModel
 async def set_commands():
 \
     commands = [
-        BotCommand(command="activate_promo", description="Активировать подписку"),
-        BotCommand(command="check_sub", description="Проверить статус подписки"),
-        BotCommand(command="oplata", description="Купить промокод"),
+        BotCommand(command="activate_promo", description="/activate_promo <промокод>"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 
