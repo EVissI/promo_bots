@@ -120,7 +120,7 @@ async def distribute_telethon_media(media_files):
     async def send_media_to_user(media_files: list[dict], user: User):
         try:
             for media in media_files:
-                await asyncio.sleep(60)  # рекомендуймая задержка чтоб не словить таймаут
+                await asyncio.sleep(30)  
                 file_id = media.get("file_id")
                 match media.get("media_type"):
                     case "photo":
