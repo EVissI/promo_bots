@@ -72,6 +72,19 @@ async def check_subscriptions():
             for user_info in users:
                 user_id = user_info.telegram_id
                 subscription_end = user_info.subscription_end
+                if subscription_end is None and user_info.promo_code is not None:
+                    user_info.promo_code = None
+                    user_info.subscription_end = None
+                    async with async_session_maker() as session:
+                        await UserDAO.update(
+                            session=session,
+                            filters=TelegramIDModel(telegram_id=user_info.telegram_id),
+                            values=UserModel.model_validate(user_info.to_dict()),
+                        )
+                    await bot.send_message(
+                        user_id,
+                        "Ваша подписка истекла. Введите новый промокод для продления.",
+                    )
                 if subscription_end is not None:
                     if subscription_end <= current_date:
                         user_info.promo_code = None

@@ -1,38 +1,45 @@
 ﻿import asyncio
 from datetime import datetime
 from loguru import logger
-from aiogram import Router,F
-from aiogram.types import Message,ContentType
-from aiogram.filters import Command,StateFilter
+from aiogram import Router, F
+from aiogram.types import Message, ContentType
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.exceptions import TelegramForbiddenError
+from aiogram.exceptions import TelegramForbiddenError, TelegramNotFound
 from app.aiogram.common.states import TelethonBatchState
 from app.db.dao import UserDAO
-from app.db.database import connection
+from app.db.database import async_session_maker
 from app.db.models import User
-from app.db.shemas import UserFilterModel,TelegramIDModel
+from app.db.shemas import UserFilterModel, TelegramIDModel
 from app.config import bot
+
 receiving_message_router = Router()
 
-@receiving_message_router.message(Command('start_batch'))
+
+@receiving_message_router.message(Command("start_batch"))
 async def cmd_start_batch(message: Message, state: FSMContext):
     await state.set_state(TelethonBatchState.waiting_for_media)
     await state.update_data(media_files=[])
 
+
 @receiving_message_router.message(
     StateFilter(TelethonBatchState.waiting_for_media),
-    F.content_type.in_({ContentType.PHOTO, ContentType.VIDEO, ContentType.VIDEO_NOTE})
+    F.content_type.in_({ContentType.PHOTO, ContentType.VIDEO, ContentType.VIDEO_NOTE}),
 )
 async def handle_telethon_media(message: Message, state: FSMContext):
     data = await state.get_data()
     media_files = data.get("media_files", [])
 
     if message.photo:
-        media_files.append({"file_id": message.photo[-1].file_id, "media_type": 'photo'})
+        media_files.append(
+            {"file_id": message.photo[-1].file_id, "media_type": "photo"}
+        )
     elif message.video:
-        media_files.append({"file_id": message.video.file_id, "media_type": 'video'})
+        media_files.append({"file_id": message.video.file_id, "media_type": "video"})
     elif message.video_note:
-        media_files.append({"file_id": message.video_note.file_id, "media_type": 'video_note'})
+        media_files.append(
+            {"file_id": message.video_note.file_id, "media_type": "video_note"}
+        )
 
     await state.update_data(media_files=media_files)
 
@@ -41,7 +48,11 @@ send_task = None
 accumulated_media_files = []
 accumulated_lock = asyncio.Lock()
 send_task_lock = asyncio.Lock()
-@receiving_message_router.message(Command('end_batch'), TelethonBatchState.waiting_for_media)
+
+
+@receiving_message_router.message(
+    Command("end_batch"), TelethonBatchState.waiting_for_media
+)
 async def end_batch(message: Message, state: FSMContext):
     global send_task
 
@@ -57,7 +68,9 @@ async def end_batch(message: Message, state: FSMContext):
 
     async with accumulated_lock:
         accumulated_media_files.extend(media_files)
-        logger.info(f"Аккумулировано {len(accumulated_media_files)} файлов для рассылки.")
+        logger.info(
+            f"Аккумулировано {len(accumulated_media_files)} файлов для рассылки."
+        )
 
     async with send_task_lock:
         if send_task and not send_task.done():
@@ -71,6 +84,7 @@ async def end_batch(message: Message, state: FSMContext):
         send_task = asyncio.create_task(schedule_distribute())
 
     await state.clear()
+
 
 async def schedule_distribute(delay=40):
 
@@ -95,44 +109,64 @@ async def schedule_distribute(delay=40):
 
 
 distribute_lock = asyncio.Lock()
-@connection()
-async def distribute_telethon_media(media_files,session,**kwargs):
+
+
+async def distribute_telethon_media(media_files):
     class RateLimitError(Exception):
         def __init__(self, retry_after):
             self.retry_after = retry_after
             super().__init__(f"Rate limit exceeded. Retry after {retry_after} seconds.")
 
-    async def send_media_to_user(media_files:list[dict],user:User):
+    async def send_media_to_user(media_files: list[dict], user: User):
         try:
             for media in media_files:
-                await asyncio.sleep(1) #рекомендуймая задержка чтоб не словить таймаут
-                file_id = media.get('file_id')
-                match media.get('media_type'):
-                    case 'photo':
-                        await bot.send_photo(user.telegram_id,file_id)
-                    case 'video':
-                        await bot.send_video(user.telegram_id,file_id)
-                    case 'video_note':  
-                        await bot.send_video_note(user.telegram_id,file_id)
+                await asyncio.sleep(60)  # рекомендуймая задержка чтоб не словить таймаут
+                file_id = media.get("file_id")
+                match media.get("media_type"):
+                    case "photo":
+                        await bot.send_photo(user.telegram_id, file_id)
+                    case "video":
+                        await bot.send_video(user.telegram_id, file_id)
+                    case "video_note":
+                        await bot.send_video_note(user.telegram_id, file_id)
         except TelegramForbiddenError:
-            logger.info(f'юзер {user.telegram_id} заблокировал бота')
+            logger.info(f"юзер {user.telegram_id} заблокировал бота")
             user.is_blocked = True
-            await UserDAO.update(session,filters=TelegramIDModel(telegram_id=user.telegram_id),values=TelegramIDModel.model_validate(user))
+            async with async_session_maker() as session:
+                await UserDAO.update(
+                    session,
+                    filters=TelegramIDModel(telegram_id=user.telegram_id),
+                    values=TelegramIDModel.model_validate(user),
+                )
         except RateLimitError as e:
-            logger.warning(f"RateLimitError при отправке видео заметки пользователю {user.id}: подождите {e.seconds} секунд.")
+            logger.warning(
+                f"RateLimitError при отправке видео заметки пользователю {user.id}: подождите {e.seconds} секунд."
+            )
             await asyncio.sleep(e.seconds)
         except Exception as e:
-            logger.error(f'при отправке медиа юзеру {user.telegram_id} произошла ошибка: {e}')
+            logger.error(
+                f"при отправке медиа юзеру {user.telegram_id} произошла ошибка: {e}"
+            )
 
     async with distribute_lock:
-        users:list[User] = await UserDAO.find_all(session=session,filters=UserFilterModel(is_blocked=False,subscription_end_gt=datetime.now()))
-        logger.info(users)
+        logger.info(f"рассылка началась в :{datetime.now().time()}")
+        timestamp_when_start_mailing = datetime.now()
+        async with async_session_maker() as session:
+            users: list[User] = await UserDAO.find_all(
+                session=session,
+                filters=UserFilterModel(
+                    is_blocked=False, subscription_end_gt=datetime.now()
+                ),
+            )
         task = []
         if users:
             for user in users:
-                task.append(send_media_to_user(media_files,user))
-        number_of_users_received_media = 20 #выше 30 ставить нельзя
+                task.append(send_media_to_user(media_files, user))
+        number_of_users_received_media = 20  # выше 30 ставить нельзя
         while task:
             current_batch = task[:number_of_users_received_media]
             task = task[number_of_users_received_media:]
             await asyncio.gather(*current_batch)
+        logger.info(
+            f"f'рассылка закончилась в :{datetime.now().time()}\nЗатраченное время - {(datetime.now() - timestamp_when_start_mailing).seconds} секунд"
+        )

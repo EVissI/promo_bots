@@ -2,13 +2,12 @@
 from datetime import datetime, timedelta
 from aiogram import Router, F
 from aiogram.types import Message,CallbackQuery
-from aiogram.exceptions import TelegramForbiddenError
-from aiogram.types import InlineKeyboardButton
+from aiogram.exceptions import TelegramForbiddenError, TelegramNotFound
 from loguru import logger
 from app.aiogram.common.states import ActivatePromoState,PaymentStates
 from app.aiogram.keyboards.inline_kb import oplata_kb
 from app.aiogram.keyboards.markup_kb import MainKeyboard, del_kbd
-from aiogram.filters import StateFilter, Command
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from app.db.dao import UserDAO, PromocodeDAO, Promocode, User
 from app.db.database import async_session_maker
@@ -84,17 +83,19 @@ async def process_activate_promo(
         await message.answer(
             f"Промокод успешно активирован, подписка кончится: {end_date.date()}",reply_markup= MainKeyboard.build_main_kb()
         )
-
-        for admin in admins:
-            msg = (
-                f"пользователь {user_info.first_name}(username: @{user_info.username}, id: {user_info.telegram_id})"
-                if user_info.username
-                else f"пользователь {user_info.first_name}(id: {user_info.telegram_id})"
-            )
-            await bot.send_message(
-                admin, msg + f' зарегистрировал промокод {aproved_promo.promo_name}'
-            )
         await state.clear()
+        for admin in admins:
+            try:
+                msg = (
+                    f"пользователь {user_info.first_name}(username: @{user_info.username}, id: {user_info.telegram_id})"
+                    if user_info.username
+                    else f"пользователь {user_info.first_name}(id: {user_info.telegram_id})"
+                )
+                await bot.send_message(
+                    admin, msg + f' зарегистрировал промокод {aproved_promo.promo_name}'
+                )
+            except TelegramNotFound:
+                logger.error(f'Рутовский администратор[{admin}] не найдет, скоректир скорректируйте .env файл')
     except TelegramForbiddenError:
         pass
     except Exception as e: 
