@@ -37,7 +37,7 @@ MAX_MESSAGES_PER_30_MINUTES = MAX_MESSAGES_PER_MINUTE * 30
 MESSAGE_INTERVAL = 60 / MAX_MESSAGES_PER_MINUTE
 
 
-client = TelegramClient("my_account3",settings.USER_BOT_API_ID, settings.USER_BOT_API_HASH)
+client = TelegramClient("my_account3",int(settings.USER_BOT_API_ID.get_secret_value()), settings.USER_BOT_API_HASH.get_secret_value())
 
 send_lock = asyncio.Lock()
 message_queue = asyncio.Queue()
