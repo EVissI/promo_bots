@@ -1,5 +1,6 @@
 ﻿import asyncio
 from datetime import datetime
+import random
 from loguru import logger
 from aiogram import Router, F
 from aiogram.types import Message, ContentType
@@ -120,7 +121,7 @@ async def distribute_telethon_media(media_files):
     async def send_media_to_user(media_files: list[dict], user: User):
         try:
             for media in media_files:
-                await asyncio.sleep(30)  
+                await asyncio.sleep(random.randint(10,60))  
                 file_id = media.get("file_id")
                 match media.get("media_type"):
                     case "photo":
@@ -162,11 +163,7 @@ async def distribute_telethon_media(media_files):
         if users:
             for user in users:
                 task.append(send_media_to_user(media_files, user))
-        number_of_users_received_media = 20  # выше 30 ставить нельзя
-        while task:
-            current_batch = task[:number_of_users_received_media]
-            task = task[number_of_users_received_media:]
-            await asyncio.gather(*current_batch)
+        await asyncio.gather(*task)
         logger.info(
             f"f'рассылка закончилась в :{datetime.now().time()}\nЗатраченное время - {(datetime.now() - timestamp_when_start_mailing).seconds} секунд"
         )
