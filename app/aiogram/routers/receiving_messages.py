@@ -76,44 +76,43 @@ async def end_batch(message: Message, state: FSMContext):
 
 
 
+
+async def send_media_to_user(media_files: list[SavedMediaFile], user: User):
+    class RateLimitError(Exception):
+        def __init__(self, retry_after):
+            self.retry_after = retry_after
+            super().__init__(f"Rate limit exceeded. Retry after {retry_after} seconds.")
+    try:
+        for media in media_files:
+            await asyncio.sleep(random.randint(40,65))  
+            file_id = media.file_id
+            match media.file_media_type:
+                case SavedMediaFile.MediaTypes.photo:
+                    await bot.send_photo(user.telegram_id, file_id)
+                case SavedMediaFile.MediaTypes.video:
+                    await bot.send_video(user.telegram_id, file_id)
+                case SavedMediaFile.MediaTypes.video_note:
+                    await bot.send_video_note(user.telegram_id, file_id)
+    except TelegramForbiddenError:
+        logger.info(f"юзер {user.telegram_id} заблокировал бота")
+        user.is_blocked = True
+        async with async_session_maker() as session:
+            await UserDAO.update(
+                session,
+                filters=TelegramIDModel(telegram_id=user.telegram_id),
+                values=UserFilterModel.model_validate(user),
+            )
+    except RateLimitError as e:
+        logger.warning(
+            f"RateLimitError при отправке видео заметки пользователю {user.id}: подождите {e.seconds} секунд."
+        )
+        await asyncio.sleep(e.seconds)
+    except Exception as e:
+        logger.error(
+            f"при отправке медиа юзеру {user.telegram_id} произошла ошибка: {e}"
+            )
+
 async def sending_media():
-    
-    async def send_media_to_user(media_files: list[SavedMediaFile], user: User):
-        class RateLimitError(Exception):
-            def __init__(self, retry_after):
-                self.retry_after = retry_after
-                super().__init__(f"Rate limit exceeded. Retry after {retry_after} seconds.")
-        try:
-            for media in media_files:
-                await asyncio.sleep(random.randint(40,65))  
-                file_id = media.file_id
-                match media.file_media_type:
-                    case SavedMediaFile.MediaTypes.photo:
-                        await bot.send_photo(user.telegram_id, file_id)
-                    case SavedMediaFile.MediaTypes.video:
-                        await bot.send_video(user.telegram_id, file_id)
-                    case SavedMediaFile.MediaTypes.video_note:
-                        await bot.send_video_note(user.telegram_id, file_id)
-        except TelegramForbiddenError:
-            logger.info(f"юзер {user.telegram_id} заблокировал бота")
-            user.is_blocked = True
-            async with async_session_maker() as session:
-                await UserDAO.update(
-                    session,
-                    filters=TelegramIDModel(telegram_id=user.telegram_id),
-                    values=UserFilterModel.model_validate(user),
-                )
-        except RateLimitError as e:
-            logger.warning(
-                f"RateLimitError при отправке видео заметки пользователю {user.id}: подождите {e.seconds} секунд."
-            )
-            await asyncio.sleep(e.seconds)
-        except Exception as e:
-            logger.error(
-                f"при отправке медиа юзеру {user.telegram_id} произошла ошибка: {e}"
-            )
-
-
     while True:
         try:
             async with async_session_maker() as session:
