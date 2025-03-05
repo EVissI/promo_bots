@@ -100,7 +100,7 @@ async def send_media_to_user(media_files: list[SavedMediaFile], user: User):
             await UserDAO.update(
                 session,
                 filters=TelegramIDModel(telegram_id=user.telegram_id),
-                values=UserFilterModel.model_validate(user),
+                values=UserFilterModel.model_validate(user.to_dict()),
             )
     except RateLimitError as e:
         logger.warning(
