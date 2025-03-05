@@ -1,7 +1,7 @@
 ﻿from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import BaseDAO
-from app.db.models import User,ConnectedEntity,ForwardedMessage,Promocode
+from app.db.models import User,ConnectedEntity,ForwardedMessage,Promocode,SavedMediaFile
 from app.db.shemas import UserFilterModel
 
 
@@ -56,3 +56,6 @@ class ForwardedMessageDAO(BaseDAO[ForwardedMessage]):
 
 class PromocodeDAO(BaseDAO[Promocode]):
     model = Promocode
+
+class SavedMediaFileDAO(BaseDAO[SavedMediaFile]):
+    model = SavedMediaFile

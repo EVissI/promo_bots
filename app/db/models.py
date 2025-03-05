@@ -36,3 +36,11 @@ class Promocode(Base):
     duration: Mapped[int] 
     usage_limit: Mapped[int]
     used_count: Mapped[int]= mapped_column(BigInteger, default=0)
+
+class SavedMediaFile(Base):
+    class MediaTypes(enum.Enum):
+        photo = 'photo'
+        video = 'video'
+        video_note ="video_note"
+    file_id: Mapped[str] = mapped_column(nullable=False)
+    file_media_type: Mapped[MediaTypes] = mapped_column(Enum(MediaTypes), nullable=False)

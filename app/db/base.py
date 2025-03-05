@@ -51,12 +51,14 @@ class BaseDAO(Generic[T]):
             raise
 
     @classmethod
-    async def find_all(cls, session: AsyncSession, filters: BaseModel):
-        """Найти все записи по фильтрам"""
+    async def find_all(cls, session: AsyncSession, filters: BaseModel, limit: int = None):
+        """Найти все записи по фильтрам с опциональным ограничением количества"""
         filter_dict = filters.model_dump(exclude_unset=True)
         logger.info(f"Поиск всех записей {cls.model.__name__} по фильтрам: {filter_dict}")
         try:
             query = select(cls.model).filter_by(**filter_dict)
+            if limit:
+                query = query.limit(limit)
             result = await session.execute(query)
             records = result.scalars().all()
             logger.info(f"Найдено {len(records)} записей.")

@@ -1,7 +1,7 @@
 ﻿from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.db.models import ConnectedEntity, User
+from app.db.models import ConnectedEntity, User,SavedMediaFile
 
 class ConnectedEntityModel(BaseModel):
     entity_id: int
@@ -58,4 +58,12 @@ class PromocodeFilter(BaseModel):
     duration: int = None
     usage_limit: int = None
     used_count: int = None
-    
+
+
+class SavedMediaFileModel(BaseModel):
+    file_id:str
+    file_media_type:SavedMediaFile.MediaTypes
+
+class SavedMediaFileFilter(BaseModel):
+    file_id:str = None
+    file_media_type:SavedMediaFile.MediaTypes = None

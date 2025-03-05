@@ -1,4 +1,6 @@
-﻿from app.config import setup_logger
+﻿import threading
+from app.aiogram.routers.receiving_messages import sending_media
+from app.config import setup_logger
 from app.db.models import User
 
 logger = setup_logger("bot")
@@ -14,7 +16,6 @@ from app.aiogram.routers.main_router import main_router
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.db.shemas import UserFilterModel, TelegramIDModel, UserModel
-
 
 async def set_commands():
 \
@@ -79,10 +80,24 @@ async def check_subscriptions():
                             filters=TelegramIDModel(telegram_id=user_info.telegram_id),
                             values=UserModel.model_validate(user_info.to_dict()),
                         )
-                    await bot.send_message(
-                        user_id,
-                        "Ваша подписка истекла. Введите новый промокод для продления.",
-                    )
+                    try:
+                        await bot.send_message(
+                            user_id,
+                            "Ваша подписка истекла. Введите новый промокод для продления.",
+                        )
+                    except TelegramForbiddenError:
+                            user_info.is_blocked = True
+                            async with async_session_maker() as session:
+                                await UserDAO.update(
+                                    session=session,
+                                    filters=TelegramIDModel(telegram_id=user_info.telegram_id),
+                                    values=UserModel.model_validate(user_info.to_dict()),
+                                )
+                            logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
+                    except Exception as e:
+                        logger.info(f"Ошибка при отправке сообщения о состоянии подписки юзеру [{user_info.telegram_id}]: {str(e)}")
+                        continue
+                        
                 if subscription_end is not None:
                     if subscription_end <= current_date:
                         user_info.promo_code = None
@@ -107,6 +122,9 @@ async def check_subscriptions():
                                     values=UserModel.model_validate(user_info.to_dict()),
                                 )
                             logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
+                        except Exception as e:
+                            logger.info(f"Ошибка при отправке сообщения о состоянии подписки юзеру [{user_info.telegram_id}]: {str(e)}")
+                            continue
                     # Напоминания перед окончанием подписки
                     else:
                         try:
@@ -141,10 +159,14 @@ async def check_subscriptions():
                                     values=UserModel.model_validate(user_info.to_dict()),
                                 )
                             logger.info(f"Юзер {user_info.telegram_id} заблокировал бота")
+                        except Exception as e:
+                            logger.info(f"Ошибка при отправке сообщения о состоянии подписки юзеру[{user_info.telegram_id}]: {str(e)}")
+                            continue
         except Exception as e:
             logger.error(f"Ошибка при отправке состояния подписки: {str(e)}")
         # Запускаем проверку раз в день
         await asyncio.sleep(86400)  # 86400 секунд = 24 часа
+
 
 
 async def main():
@@ -154,8 +176,9 @@ async def main():
     # регистрация функций
     dp.startup.register(start_bot)
     dp.shutdown.register(stop_bot)
+    asyncio.create_task(sending_media())
     asyncio.create_task(check_subscriptions())
-    try:
+    try:       
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
     finally:
