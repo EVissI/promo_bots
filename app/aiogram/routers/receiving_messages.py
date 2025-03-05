@@ -85,7 +85,7 @@ async def sending_media():
                 super().__init__(f"Rate limit exceeded. Retry after {retry_after} seconds.")
         try:
             for media in media_files:
-                await asyncio.sleep(random.randint(50,65))  
+                await asyncio.sleep(random.randint(40,65))  
                 file_id = media.file_id
                 match media.file_media_type:
                     case SavedMediaFile.MediaTypes.photo:
