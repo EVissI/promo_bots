@@ -60,6 +60,7 @@ async def end_batch(message: Message, state: FSMContext):
         return
 
     await message.reply(f"Файлы получены. Всего {len(media_files)} файлов. Начинаю подготовку к рассылке пользователям.")
+    logger.info(f"Файлы получены. Всего {len(media_files)} файлов.")
     async with async_session_maker() as session:
         for media in media_files:
             try:
@@ -67,6 +68,8 @@ async def end_batch(message: Message, state: FSMContext):
             except Exception as e:
                 logger.error(f'При добавлении файла в бд произошла ошибка: {e}')
                 continue
+        all_data = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter())
+        logger.info(f'{len(all_data)}-всего записей сейчас')
     await state.clear()
 
 
@@ -82,7 +85,7 @@ async def sending_media():
                 super().__init__(f"Rate limit exceeded. Retry after {retry_after} seconds.")
         try:
             for media in media_files:
-                await asyncio.sleep(random.randint(10,70))  
+                await asyncio.sleep(random.randint(50,65))  
                 file_id = media.file_id
                 match media.file_media_type:
                     case SavedMediaFile.MediaTypes.photo:
@@ -98,7 +101,7 @@ async def sending_media():
                 await UserDAO.update(
                     session,
                     filters=TelegramIDModel(telegram_id=user.telegram_id),
-                    values=TelegramIDModel.model_validate(user),
+                    values=UserFilterModel.model_validate(user),
                 )
         except RateLimitError as e:
             logger.warning(
@@ -135,7 +138,7 @@ async def sending_media():
             await asyncio.gather(*task)
             async with async_session_maker() as session:
                 for media in media_files:
-                    await SavedMediaFileDAO.delete(session=session,filters=SavedMediaFileFilter.model_validate(media.to_dict()))
+                    await SavedMediaFileDAO.delete(session=session,filters=SavedMediaFileFilter(file_id=media.file_id))
             logger.info(
                 f"f'рассылка закончилась в :{datetime.now().time()}\nЗатраченное время - {(datetime.now() - timestamp_when_start_mailing).seconds} секунд"
             )
