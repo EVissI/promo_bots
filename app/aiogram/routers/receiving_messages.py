@@ -116,7 +116,7 @@ async def sending_media():
     while True:
         try:
             async with async_session_maker() as session:
-                media_files = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter(), limit=20)
+                media_files = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter(), limit=1)
             if not media_files:
                 logger.info(f'Нет сохранененных медиа файлов\n Время проверки: {datetime.now().time()}')
                 await asyncio.sleep(60)

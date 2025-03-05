@@ -125,7 +125,7 @@ class BaseDAO(Generic[T]):
     async def delete(cls, session: AsyncSession, filters: BaseModel):
         """Удалить записи по фильтру"""
         filter_dict = filters.model_dump(exclude_unset=True)
-        # logger.info(f"Удаление записей {cls.model.__name__} по фильтру: {filter_dict}")
+        logger.info(f"Удаление записей {cls.model.__name__} по фильтру: {filter_dict}")
         if not filter_dict:
             logger.error("Нужен хотя бы один фильтр для удаления.")
             raise ValueError("Нужен хотя бы один фильтр для удаления.")

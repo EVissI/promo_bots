@@ -34,6 +34,11 @@ async def process_activate_promo(
                 session=session, filters=TelegramIDModel(telegram_id=message.from_user.id)
             )
         logger.info(user_info)
+        if not promo_info:
+            await message.answer('Промокода не существует',reply_markup=MainKeyboard.build_main_kb())
+            await state.clear()
+            return
+        
         if user_info.promo_code == promo_info.promo_name:
                 await message.answer(
                     "Вы уже использовали этот промокод",
@@ -41,11 +46,6 @@ async def process_activate_promo(
                 )
                 await state.clear()
                 return
-        if not promo_info:
-            await message.answer('Промокода не существует',reply_markup=MainKeyboard.build_main_kb())
-            await state.clear()
-            return
-        
         
         promo_info.used_count += 1
         user_info.promo_code = promo_info.promo_name
