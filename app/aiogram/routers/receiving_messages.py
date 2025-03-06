@@ -61,15 +61,16 @@ async def end_batch(message: Message, state: FSMContext):
 
     await message.reply(f"Файлы получены. Всего {len(media_files)} файлов. Начинаю подготовку к рассылке пользователям.")
     logger.info(f"Файлы получены. Всего {len(media_files)} файлов.")
+    saved_files = []
+    for media in media_files:
+        saved_files.append(SavedMediaFileModel(file_id=media.get('file_id'),file_media_type=media.get('media_type')))
     async with async_session_maker() as session:
-        for media in media_files:
-            try:
-                await SavedMediaFileDAO.add(session=session,values=SavedMediaFileModel(file_id=media.get('file_id'),file_media_type=media.get('media_type')))
-            except Exception as e:
-                logger.error(f'При добавлении файла в бд произошла ошибка: {e}')
-                continue
-        all_data = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter())
-        logger.info(f'{len(all_data)}-всего записей сейчас')
+        try:
+            await SavedMediaFileDAO.add_many(session=session,instances=saved_files)
+            all_data = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter())
+        except Exception as e:
+            logger.error(f'При добавление файлов в бд произошла ошибка: {str(e)}')
+    logger.info(f'{len(all_data)}-всего записей сейчас')
     await state.clear()
 
 

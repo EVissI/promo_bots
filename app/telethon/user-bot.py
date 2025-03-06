@@ -211,7 +211,7 @@ async def list_groups(event):
         await client.send_message(event.sender_id, msg)
 
 
-BATCH_SIZE = 100  # Максимальный размер батча для Telegram API
+BATCH_SIZE = 25  # Максимальный размер батча для Telegram API
 BATCH_INTERVAL = 1  # Задержка между батчами в секундах
 
 

@@ -36,7 +36,6 @@ class BaseDAO(Generic[T]):
     async def find_one_or_none(cls, session: AsyncSession, filters: BaseModel):
         """Найти одну запись по фильтрам"""
         filter_dict = filters.model_dump(exclude_unset=True)
-        logger.info(f"Поиск одной записи {cls.model.__name__} по фильтрам: {filter_dict}")
         try:
             query = select(cls.model).filter_by(**filter_dict)
             result = await session.execute(query)
@@ -54,7 +53,6 @@ class BaseDAO(Generic[T]):
     async def find_all(cls, session: AsyncSession, filters: BaseModel, limit: int = None):
         """Найти все записи по фильтрам с опциональным ограничением количества"""
         filter_dict = filters.model_dump(exclude_unset=True)
-        logger.info(f"Поиск всех записей {cls.model.__name__} по фильтрам: {filter_dict}")
         try:
             query = select(cls.model).filter_by(**filter_dict)
             if limit:
@@ -125,7 +123,6 @@ class BaseDAO(Generic[T]):
     async def delete(cls, session: AsyncSession, filters: BaseModel):
         """Удалить записи по фильтру"""
         filter_dict = filters.model_dump(exclude_unset=True)
-        logger.info(f"Удаление записей {cls.model.__name__} по фильтру: {filter_dict}")
         if not filter_dict:
             logger.error("Нужен хотя бы один фильтр для удаления.")
             raise ValueError("Нужен хотя бы один фильтр для удаления.")
