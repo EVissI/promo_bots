@@ -211,8 +211,8 @@ async def list_groups(event):
         await client.send_message(event.sender_id, msg)
 
 
-BATCH_SIZE = 25  # Максимальный размер батча для Telegram API
-BATCH_INTERVAL = 10  # Задержка между батчами в секундах
+BATCH_SIZE = 15  # Максимальный размер батча для Telegram API
+BATCH_INTERVAL = 3  # Задержка между батчами в секундах
 
 
 @client.on(events.NewMessage(pattern="/fetchhistory"))
@@ -324,9 +324,9 @@ async def fetch_history(event):
                 await client.send_message(settings.BOT_TAG, "/start_batch")
                 logger.info("Отправлена команда /start_batch основному боту.")
 
-                # Пересылаем батч сообщений
-                await client.forward_messages(settings.BOT_TAG, messages_batch)
-                logger.info(f"Пересланы {len(batch)} сообщений основному боту.")
+                for msg in messages_batch:
+                    await client.send_message(settings.BOT_TAG, msg)
+                    await asyncio.sleep(1)
 
                 # Отправляем команду /end_batch
                 await client.send_message(settings.BOT_TAG, "/end_batch")
