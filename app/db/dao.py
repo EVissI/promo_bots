@@ -24,7 +24,7 @@ class UserDAO(BaseDAO[User]):
     
 
     @staticmethod
-    async def find_all(session, filters=None):
+    async def find_all_non_banned_users(session, filters=None):
         query = select(User)
         if filters:
             if filters.is_blocked is not None:

@@ -60,7 +60,7 @@ async def check_subscriptions():
     while True:
         try:
             async with async_session_maker() as session:
-                users:list[User] = await UserDAO.find_all(
+                users:list[User] = await UserDAO.find_all_non_banned_users(
                     session,
                     filters=UserFilterModel(
                         is_blocked=False

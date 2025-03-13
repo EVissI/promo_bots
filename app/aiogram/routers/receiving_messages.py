@@ -125,7 +125,7 @@ async def sending_media():
             logger.info(f"рассылка началась в :{datetime.now().time()}")
             timestamp_when_start_mailing = datetime.now()
             async with async_session_maker() as session:
-                users: list[User] = await UserDAO.find_all(
+                users: list[User] = await UserDAO.find_all_non_banned_users(
                     session=session,
                     filters=UserFilterModel(
                         is_blocked=False, subscription_end_gt=datetime.now()
