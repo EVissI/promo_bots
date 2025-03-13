@@ -1,7 +1,7 @@
 ﻿from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
-from app.db.models import ConnectedEntity, User,SavedMediaFile
+from app.db.models import ConnectedEntity, User,SavedMediaFile, ForwardedMessage
 
 class ConnectedEntityModel(BaseModel):
     entity_id: int
@@ -16,7 +16,11 @@ class ConnectedEntityFilter(BaseModel):
 class ForwardedMessageModel(BaseModel):
     entity_id: int
     message_id: int
-    sent:bool = False
+    sent:bool 
+
+class ForwardedMessageErrosModel(BaseModel):
+    forwarded_message_id:int
+    error_text:str
 
 class ForwardedMessageFilter(BaseModel):
     entity_id: int = None
@@ -58,7 +62,6 @@ class PromocodeFilter(BaseModel):
     duration: int = None
     usage_limit: int = None
     used_count: int = None
-
 
 class SavedMediaFileModel(BaseModel):
     file_id:str

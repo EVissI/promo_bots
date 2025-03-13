@@ -2,6 +2,7 @@
 import os
 
 from app.config import setup_logger
+
 logger = setup_logger("user_bot")
 from loguru import logger
 
@@ -20,10 +21,11 @@ from telethon.errors import FloodWaitError
 
 from app.db.database import async_session_maker
 from app.db.models import ConnectedEntity
-from app.db.dao import ConnectedEntityDAO, ForwardedMessageDAO
+from app.db.dao import ConnectedEntityDAO, ForwardedMessageDAO,ForwardedMessageErrorDAO
 from app.db.shemas import (
     ConnectedEntityModel,
     ConnectedEntityFilter,
+    ForwardedMessageErrosModel,
     ForwardedMessageModel,
     ForwardedMessageFilter,
 )
@@ -37,7 +39,11 @@ MAX_MESSAGES_PER_30_MINUTES = MAX_MESSAGES_PER_MINUTE * 30
 MESSAGE_INTERVAL = 60 / MAX_MESSAGES_PER_MINUTE
 
 
-client = TelegramClient("my_account3",int(settings.USER_BOT_API_ID.get_secret_value()), settings.USER_BOT_API_HASH.get_secret_value())
+client = TelegramClient(
+    "my_account3",
+    int(settings.USER_BOT_API_ID.get_secret_value()),
+    settings.USER_BOT_API_HASH.get_secret_value(),
+)
 
 send_lock = asyncio.Lock()
 message_queue = asyncio.Queue()
@@ -85,7 +91,6 @@ async def list_my_groups(event):
         if not groups:
             await event.reply("Я не состою в группах или каналах")
             return
-
 
         message = "Группы и каналы:\n\n"
         for group in groups:
@@ -211,8 +216,6 @@ async def list_groups(event):
         await client.send_message(event.sender_id, msg)
 
 
-BATCH_SIZE = 15  # Максимальный размер батча для Telegram API
-BATCH_INTERVAL = 3  # Задержка между батчами в секундах
 
 
 @client.on(events.NewMessage(pattern="/fetchhistory"))
@@ -259,16 +262,13 @@ async def fetch_history(event):
                         f"Достигнут последний обработанный message_id ({last_message_id}) для сущности {entity_id}. Прекращаю перебор."
                     )
                     break
-
                 if message.media:
                     # Проверяем тип медиа
                     if isinstance(message.media, MessageMediaPhoto):
                         pass  # Фотография подходит
                     elif isinstance(message.media, MessageMediaDocument):
                         mime_type = message.media.document.mime_type or ""
-                        if mime_type.startswith("video/") or mime_type.startswith(
-                            "image/"
-                        ):
+                        if mime_type.startswith("video/"):
                             pass  # Видео или изображение подходит
                         else:
                             # Проверка на видеокружку
@@ -314,48 +314,14 @@ async def fetch_history(event):
 
     if total_messages:
         try:
-
-            for i in range(0, len(total_messages), BATCH_SIZE):
-                batch = total_messages[i : i + BATCH_SIZE]
-                messages_batch = [msg for msg, entity_id in batch]
-                logger.info(f"Отправка батча из {len(batch)} сообщений.")
-
-                # Отправляем команду /start_batch
-                await client.send_message(settings.BOT_TAG, "/start_batch")
-                logger.info("Отправлена команда /start_batch основному боту.")
-
-                for msg in messages_batch:
-                    await client.send_message(settings.BOT_TAG, msg)
-                    await asyncio.sleep(1)
-
-                # Отправляем команду /end_batch
-                await client.send_message(settings.BOT_TAG, "/end_batch")
-                logger.info("Отправлена команда /end_batch основному боту.")
-
-                # Отмечаем сообщения как пересланные после успешной отправки
-                async with async_session_maker() as session:
-                    for message, entity_id in batch:
-
-                        await ForwardedMessageDAO.add(
-                            session=session,
-                            values=ForwardedMessageModel(
-                                message_id=message.id, entity_id=entity_id, sent=True
-                            ),
-                        )
-
-                # Задержка между отправками батчей
-                await asyncio.sleep(BATCH_INTERVAL)
-        except FloodWaitError as e:
-            logger.warning(
-                f"FloodWaitError при пересылке сообщений: Подождите {e.seconds} секунд."
-            )
-
             async with async_session_maker() as session:
-                for message, entity_id in total_messages[i:]:
+                for msg, entity_id in total_messages:
                     await ForwardedMessageDAO.add(
                         session=session,
                         values=ForwardedMessageModel(
-                            message_id=message.id, entity_id=entity_id, sent=False
+                            message_id=msg.id,
+                            entity_id=entity_id,
+                            sent=False,
                         ),
                     )
         except Exception as e:
@@ -371,241 +337,48 @@ async def fetch_history(event):
         f"Загрузка истории для всех групп и каналов завершена. Всего собрано {total_count} сообщений."
     )
 
-
-client.on(events.NewMessage())
-async def forward_new_messages(event):
-    logger.debug(
-        f"Получено новое сообщение из chat_id={event.chat_id}, тип={type(event.chat_id)}"
-    )
-    async with async_session_maker() as session:
-        entities:list[ConnectedEntity] = await ConnectedEntityDAO.find_all(session=session,filters=ConnectedEntityFilter())
-        logger.debug(
-            f"Подключённые сущности: {entities}, типы ID сущностей: {[type(e.entity_id) for e in entities]}"
-        )
-
-    try:
-        # Получаем сущность чата
-        entity = await event.get_chat()
-        entity_id = entity.id
-        logger.debug(f"entity.id для текущего чата: {entity_id}")
-    except Exception as e:
-        logger.error(f"Не удалось получить entity для chat_id={event.chat_id}: {e}")
-        return
-
-    # Найдём соответствующую запись
-    connected_chat = next((e for e in entities if e["id"] == entity_id), None)
-    if not connected_chat:
-        logger.debug("Сообщение не из подключённой группы или канала")
-        return
-
-    logger.debug(
-        f"Сообщение из подключённой {'группы' if connected_chat['type'] == 'group' else 'канала'}"
-    )
-
-    if event.message.media:
-        media_type = type(event.message.media)
-        logger.debug(f"Сообщение содержит медиа типа: {media_type}")
-        if isinstance(event.message.media, MessageMediaPhoto):
-            logger.debug("Медиа — фотография")
-        elif isinstance(event.message.media, MessageMediaDocument):
-            mime_type = event.message.media.document.mime_type
-            logger.debug(f"MIME тип документа: {mime_type}")
-            if mime_type.startswith("video/"):
-                logger.debug("Медиа — видео")
-            else:
-                logger.debug("Проверка на видеокружку")
-                is_round_video = False
-                for attr in event.message.media.document.attributes:
-                    if isinstance(attr, DocumentAttributeVideo) and getattr(
-                        attr, "round_message", False
-                    ):
-                        is_round_video = True
-                        break
-                if is_round_video:
-                    logger.debug("Медиа — видеокружка")
-                else:
-                    logger.debug("Неподдерживаемый тип медиа")
-                    return
-        else:
-            logger.debug("Неподдерживаемый тип медиа")
-            return
-
-        async with async_session_maker() as session:
-            if await ForwardedMessageDAO.find_one_or_none(
-                session=session,
-                filters=ForwardedMessageFilter(
-                    message_id=event.message.id, entity_id=entity_id
-                ),
-            ):
-                logger.debug("Сообщение уже было обработано")
-                return  # Пропускаем уже обработанные сообщения
-
-        # Добавляем сообщение в очередь для отправки
-        try:
-            await message_queue.put((event.message, entity_id))
-            logger.debug("Сообщение добавлено в очередь для пересылки")
-        except Exception as e:
-            logger.error(f"Исключение при добавлении сообщения в очередь: {e}")
-    else:
-        logger.debug("Сообщение не содержит медиа")
-
-
-async def process_message_queue():
+async def send_forwardes_messages():
+    BATCH_SIZE = 15  
+    BATCH_INTERVAL = 5  
+    MESSAGE_INTERVAL = 10 
     while True:
-        batch = []
-        try:
-            # Ожидаем первое сообщение с таймаутом
-            message_tuple = await asyncio.wait_for(message_queue.get(), timeout=5)
-            batch.append(message_tuple)
-
-            # Собираем дополнительные сообщения в течение BATCH_INTERVAL
-            start_time = asyncio.get_event_loop().time()
-            while len(batch) < BATCH_SIZE:
-                time_left = BATCH_INTERVAL - (
-                    asyncio.get_event_loop().time() - start_time
-                )
-                if time_left <= 0:
-                    break
-                try:
-                    message_tuple = await asyncio.wait_for(
-                        message_queue.get(), timeout=time_left
-                    )
-                    batch.append(message_tuple)
-                except asyncio.TimeoutError:
-                    break  # Нет новых сообщений в течение оставшегося времени
-
-            if batch:
-                async with send_lock:
-                    try:
-                        # Отправляем команду /start_batch
-                        await client.send_message(settings.BOT_TAG, "/start_batch")
-                        logger.info("Отправлена команда /start_batch основному боту.")
-
-                        # Подготавливаем сообщения для отправки
-                        messages = [msg for msg, entity_id in batch]
-
-                        # Пересылаем все сообщения в пачке одним вызовом
-                        await client.forward_messages(settings.BOT_TAG, messages)
-                        logger.info(f"Пересланы {len(batch)} сообщений основному боту.")
-
-                        # Отправляем команду /end_batch
-                        await client.send_message(settings.BOT_TAG, "/end_batch")
-                        logger.info("Отправлена команда /end_batch основному боту.")
-
-                        async with async_session_maker() as session:
-                            for msg, entity_id in batch:
-                                await ForwardedMessageDAO.add(
-                                    session=session,
-                                    values=ForwardedMessageModel(
-                                        msg.id, entity_id, sent=True
-                                    ),
-                                )
-
-                        logger.debug(f"Отправлена пачка из {len(batch)} сообщений.")
-                    except FloodWaitError as e:
-                        logger.warning(
-                            f"FloodWaitError при пересылке сообщений: Подождите {e.seconds} секунд."
-                        )
-
-                        # Устанавливаем retry_at для сообщений и не помечаем их как отправленные
-                        retry_at = datetime.now() + timedelta(seconds=e.seconds)
-                        async with async_session_maker() as session:
-                            for msg, entity_id in batch:
-                                await ForwardedMessageDAO.add(
-                                    session=session,
-                                    values=ForwardedMessageModel(
-                                        msg.id, entity_id, sent=False
-                                    ),
-                                )
-                        # Сообщения будут повторно отправлены функцией retry_failed_messages
-                    except Exception as e:
-                        logger.error(
-                            f"Ошибка при пересылке сообщений основному боту: {e}"
-                        )
-                        # Сообщения не будут повторно отправлены
-                        async with async_session_maker() as session:
-                            for msg, entity_id in batch:
-                                await ForwardedMessageDAO.add(
-                                    session=session,
-                                    values=ForwardedMessageModel(
-                                        msg.id, entity_id, sent=False
-                                    ),
-                                )
-        except asyncio.TimeoutError:
-            continue
-        except Exception as e:
-            logger.error(f"Ошибка при обработке очереди сообщений: {e}")
-
-
-async def retry_failed_messages():
-    while True:
-        # Ждём 30 минут перед каждой попыткой
-        await asyncio.sleep(1800)
-
-        logger.info("Начало попытки повторной отправки сообщений.")
-
         async with async_session_maker() as session:
-            messages_to_retry = await ForwardedMessageDAO.find_all(
-                session, filters=ForwardedMessageFilter(sent=False)
-            )
-
-        if not messages_to_retry:
-            logger.info("Нет сообщений для повторной отправки.")
+            messages = await ForwardedMessageDAO.get_not_sendings_messages(session,limit=BATCH_SIZE)
+        if not message:
+            logger.info("Нет сообщений для пересылки")
+            await asyncio.sleep(60)
             continue
-
-        messages_grouped = defaultdict(list)
-        for record in messages_to_retry:
-            messages_grouped[record["entity_id"]].append(record["message_id"])
-        async with send_lock:
-            for entity_id, message_ids in messages_grouped.items():
-                try:
-                    # Получаем сообщения для пересылки
-                    messages = await client.get_messages(entity_id, ids=message_ids)
-
-                    # Отправляем команду /start_batch основному боту
-                    await client.send_message(settings.BOT_TAG, "/start_batch")
-                    logger.info("Отправлена команда /start_batch основному боту.")
-
-                    # Пересылаем сообщения основному боту
-                    await client.forward_messages(settings.BOT_TAG, messages)
-                    logger.info(
-                        f"Пересланы {len(messages)} сообщений основному боту при повторной отправке."
+        await client.send_message(settings.BOT_TAG, "/start_batch")
+        for message in messages:
+            try:
+                await client.forward_messages(settings.BOT_TAG, message.message_id, message.entity_id)
+                async with async_session_maker() as session:
+                    message.sent = True
+                    await ForwardedMessageDAO.update(
+                        session=session,
+                        filters=ForwardedMessageFilter(
+                            entity_id=message.entity_id, message_id=message.message_id
+                        ),
+                        values=ForwardedMessageModel.model_validate(message.to_dict()),
                     )
-
-                    # Отправляем команду /end_batch основному боту
-                    await client.send_message(settings.BOT_TAG, "/end_batch")
-                    logger.info("Отправлена команда /end_batch основному боту.")
-
-                    async with async_session_maker as session:
-                        for message_id in message_ids:
-                            await ForwardedMessageDAO.update(
-                                session=session,
-                                filters=ForwardedMessageFilter(
-                                    entity_id=entity_id, message_id=message_id
-                                ),
-                                values=ForwardedMessageFilter(sent=True),
-                            )
-                    logger.info(
-                        f"Сообщения от сущности {entity_id} помечены как отправленные."
+                await asyncio.sleep(MESSAGE_INTERVAL)
+            except Exception as e:
+                logger.error(f"Ошибка при пересылке сообщения: {str(e)}")
+                async with async_session_maker() as session:
+                    await ForwardedMessageErrorDAO.add(
+                        session=session,
+                        values=ForwardedMessageErrosModel(
+                            forwarded_message_id=message.id,
+                            error_text=str(e),
+                        ),
                     )
-                except FloodWaitError as e:
-                    logger.warning(
-                        f"FloodWaitError при повторной отправке сообщений от сущности {entity_id}"
-                    )
-
-                    break
-                except Exception as e:
-                    logger.error(
-                        f"Ошибка при повторной отправке сообщений от сущности {entity_id}: {e}"
-                    )
-                    continue
-
+                continue
+        await client.send_message(settings.BOT_TAG, "/end_batch")
+        await asyncio.sleep(BATCH_INTERVAL)
 
 async def main():
     await client.run_until_disconnected()
-    asyncio.create_task(process_message_queue())
-    asyncio.create_task(retry_failed_messages())
-
+    asyncio.create_task(send_forwardes_messages())
 with client:
     try:
         logger.info("Юзер бот включен")

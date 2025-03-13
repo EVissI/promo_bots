@@ -1,6 +1,6 @@
 ﻿import enum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import BigInteger, DateTime,Boolean, Enum,String
+from sqlalchemy import BigInteger, DateTime,Boolean, Enum, ForeignKey,String
 from typing import Optional
 from app.db.database import Base
 
@@ -30,7 +30,14 @@ class ForwardedMessage(Base):
     entity_id: Mapped[int] = mapped_column(BigInteger, default=None)
     message_id: Mapped[int] = mapped_column(BigInteger, default=None)
     sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    errors:Mapped['ForwardedMessageError'] = relationship(back_populates="forwarded_messages")
+
+class ForwardedMessageError(Base):
+    message_id:Mapped[int]= mapped_column(BigInteger, ForeignKey('forwarded_messages.id'),unique=True)
+    error_text: Mapped[str]
     
+    forwarded_messages:Mapped['ForwardedMessage'] = relationship(back_populates="errors")
+
 class Promocode(Base):
     promo_name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     duration: Mapped[int] 

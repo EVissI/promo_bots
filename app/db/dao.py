@@ -1,8 +1,8 @@
 ﻿from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import BaseDAO
-from app.db.models import User,ConnectedEntity,ForwardedMessage,Promocode,SavedMediaFile
-from app.db.shemas import UserFilterModel
+from app.db.models import ForwardedMessageError, User,ConnectedEntity,ForwardedMessage,Promocode,SavedMediaFile
+from app.db.shemas import UserFilterModel,ForwardedMessageFilter
 
 
 
@@ -42,6 +42,21 @@ class ConnectedEntityDAO(BaseDAO[ConnectedEntity]):
 
 class ForwardedMessageDAO(BaseDAO[ForwardedMessage]):
     model = ForwardedMessage
+
+    @classmethod
+    async def get_not_sendings_messages(cls, session: AsyncSession, limit: int = None) -> list[ForwardedMessage]:
+        """
+        Получает список всех не отправленных сообщений, которых нет в таблице ForwardedMessageError.
+        """
+        query = (
+            select(cls.model)
+            .outerjoin(ForwardedMessageError, ForwardedMessage.id == ForwardedMessageError.forwarded_message_id)
+            .where(ForwardedMessage.sent == False)
+            .where(ForwardedMessageError.id == None)
+            .limit(limit)
+        )
+        result = await session.execute(query)
+        return result.scalars().all()
     @classmethod
     async def get_max_message_id(cls, session: AsyncSession, entity_id: int) -> int|None:
         """
@@ -54,8 +69,12 @@ class ForwardedMessageDAO(BaseDAO[ForwardedMessage]):
         max_id = result.scalar()
         return max_id if max_id is not None else None
 
+class ForwardedMessageErrorDAO(BaseDAO[ForwardedMessageError]):
+    model = ForwardedMessageError
+
 class PromocodeDAO(BaseDAO[Promocode]):
     model = Promocode
 
 class SavedMediaFileDAO(BaseDAO[SavedMediaFile]):
     model = SavedMediaFile
+
