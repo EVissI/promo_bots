@@ -349,6 +349,7 @@ async def send_forwardes_messages():
             logger.info("Нет сообщений для пересылки")
             await asyncio.sleep(60)
             continue
+        logger.info(f'Начинаю пересылку сообщений, полученно сообщений: {len(messages)}')
         await client.send_message(settings.BOT_TAG, "/start_batch")
         for message in messages:
             try:
