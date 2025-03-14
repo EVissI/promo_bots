@@ -50,7 +50,7 @@ class ForwardedMessageDAO(BaseDAO[ForwardedMessage]):
         """
         query = (
             select(cls.model)
-            .outerjoin(ForwardedMessageError, ForwardedMessage.id == ForwardedMessageError.forwarded_message_id)
+            .outerjoin(ForwardedMessageError, ForwardedMessage.id == ForwardedMessageError.forwarded_messages_id)
             .where(ForwardedMessage.sent == False)
             .where(ForwardedMessageError.id == None)
             .limit(limit)
