@@ -378,11 +378,12 @@ async def send_forwardes_messages():
 
 async def main():
     await client.run_until_disconnected()
-    asyncio.create_task(send_forwardes_messages())
+
 with client:
     try:
         logger.info("Юзер бот включен")
         loop = asyncio.get_event_loop()
+        loop.create_task(send_forwardes_messages())
         client.loop.run_until_complete(main())
     except KeyboardInterrupt:
         client.disconnect()
