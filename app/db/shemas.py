@@ -19,7 +19,7 @@ class ForwardedMessageModel(BaseModel):
     sent:bool 
 
 class ForwardedMessageErrosModel(BaseModel):
-    forwarded_message_id:int
+    message_id:int
     error_text:str
 
 class ForwardedMessageFilter(BaseModel):

@@ -16,6 +16,7 @@ from telethon.tl.types import (
     MessageMediaPhoto,
     MessageMediaDocument,
     DocumentAttributeVideo,
+    PeerChannel
 )
 from telethon.errors import FloodWaitError
 
@@ -351,7 +352,7 @@ async def send_forwardes_messages():
         await client.send_message(settings.BOT_TAG, "/start_batch")
         for message in messages:
             try:
-                await client.forward_messages(settings.BOT_TAG, message.message_id, message.entity_id)
+                await client.forward_messages(settings.BOT_TAG, message.message_id, PeerChannel(message.entity_id))
                 async with async_session_maker() as session:
                     message.sent = True
                     await ForwardedMessageDAO.update(
@@ -368,7 +369,7 @@ async def send_forwardes_messages():
                     await ForwardedMessageErrorDAO.add(
                         session=session,
                         values=ForwardedMessageErrosModel(
-                            forwarded_message_id=message.id,
+                            message_id=message.id,
                             error_text=str(e),
                         ),
                     )
