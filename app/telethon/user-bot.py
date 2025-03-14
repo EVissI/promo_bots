@@ -344,7 +344,7 @@ async def send_forwardes_messages():
     while True:
         async with async_session_maker() as session:
             messages = await ForwardedMessageDAO.get_not_sendings_messages(session,limit=BATCH_SIZE)
-        if not message:
+        if not messages:
             logger.info("Нет сообщений для пересылки")
             await asyncio.sleep(60)
             continue
