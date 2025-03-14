@@ -339,7 +339,7 @@ async def fetch_history(event):
     )
 
 async def send_forwardes_messages():
-    BATCH_SIZE = 15  
+    BATCH_SIZE = 1 
     BATCH_INTERVAL = 5  
     MESSAGE_INTERVAL = 10 
     while True:
