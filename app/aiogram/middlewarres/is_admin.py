@@ -3,6 +3,7 @@ from typing import Callable, Awaitable, Dict, Any
 from aiogram import BaseMiddleware
 from aiogram.types import Message
 
+from app.aiogram.common.messages import get_text
 from app.db.dao import UserDAO
 from app.db.models import User
 from app.db.database import async_session_maker
@@ -20,5 +21,5 @@ class CheckIsAdmin(BaseMiddleware):
                 return await handler(event, data) 
             else:
                 await event.answer(
-                    "Только администраторы могут пользоваться этим функционалом"
+                    get_text("user_is_not_admin",lang = event.from_user.language_code)
                 )

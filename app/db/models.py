@@ -17,6 +17,7 @@ class User(Base):
     subscription_end : Mapped[DateTime] = mapped_column(DateTime, default=None,nullable=True)
     is_blocked:Mapped[bool] = mapped_column(Boolean, default=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.user)
+    language_code: Mapped[str] = mapped_column(String, default='ru')
 
 class ConnectedEntity(Base):
     class EntityType(enum.Enum):

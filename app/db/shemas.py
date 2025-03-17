@@ -39,6 +39,7 @@ class UserModel(TelegramIDModel):
     subscription_end: Optional[datetime] = None
     is_blocked:bool = False
     role:User.Role = User.Role.user
+    language_code:str = 'ru'
 
 class UserFilterModel(BaseModel):
     telegram_id: int = None
@@ -50,7 +51,8 @@ class UserFilterModel(BaseModel):
     subscription_end_lt: Optional[datetime] = None  # Less 
     is_blocked:bool = None
     role:User.Role = None
-
+    language_code:str = None
+    
 class PromocodeModel(BaseModel):
     promo_name: str
     duration: int 

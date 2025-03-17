@@ -18,7 +18,6 @@ from app.db.database import async_session_maker
 from app.db.shemas import UserFilterModel, TelegramIDModel, UserModel
 
 async def set_commands():
-\
     commands = [
         BotCommand(command="activate_promo", description="/activate_promo <промокод>"),
     ]

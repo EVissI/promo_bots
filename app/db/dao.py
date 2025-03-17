@@ -2,13 +2,20 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import BaseDAO
 from app.db.models import ForwardedMessageError, User,ConnectedEntity,ForwardedMessage,Promocode,SavedMediaFile
-from app.db.shemas import UserFilterModel,ForwardedMessageFilter
+from app.db.shemas import TelegramIDModel, UserFilterModel,ForwardedMessageFilter
 
 
 
 
 class UserDAO(BaseDAO[User]):
     model = User
+    async def find_by_telegram_id(session:AsyncSession,telegram_id:int) -> User|None:
+        """
+        Получает юзера по его телграмм id
+        """
+        filters = TelegramIDModel(telegram_id=telegram_id)
+        return await UserDAO.find_one_or_none(session,filters=filters)
+    
     async def get_admins(session:AsyncSession) -> list[User]|None:
         """
         Получает список всех администраторов.

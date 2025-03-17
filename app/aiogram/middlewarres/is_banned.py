@@ -3,6 +3,7 @@
 from aiogram import BaseMiddleware
 from aiogram.types import Message
 
+from app.aiogram.common.messages import get_text
 from app.db.dao import UserDAO
 from app.db.models import User
 from app.db.database import async_session_maker
@@ -20,5 +21,5 @@ class CheckIsBanned(BaseMiddleware):
                 return await handler(event, data) 
             else:
                 await event.answer(
-                    "К сожалению вы заблокированны в боте"
+                    get_text("user_is_banned",lang = event.from_user.language_code)
                 )

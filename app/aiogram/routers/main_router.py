@@ -2,7 +2,7 @@
 from aiogram.types import Message
 from aiogram.filters import CommandStart
 from loguru import logger
-from app.aiogram.common.messages import start_message
+from app.aiogram.common.messages import get_text
 from app.aiogram.keyboards.markup_kb import MainKeyboard
 from app.aiogram.middlewarres.is_admin import CheckIsAdmin
 from app.aiogram.middlewarres.is_banned import CheckIsBanned
@@ -34,7 +34,7 @@ async def cmd_start(message: Message):
                 session=session, filters=TelegramIDModel(telegram_id=user_id)
             )
         if user_info:
-            msg = start_message(user_info.first_name)
+            msg = get_text('start_msg', lang=user_info.language_code)
             if user_info.is_blocked == True:
                 async with async_session_maker() as session:
                     user_info.is_blocked = False
@@ -43,7 +43,7 @@ async def cmd_start(message: Message):
                         filters=TelegramIDModel(telegram_id=user_id),
                         values=UserModel.model_validate(user_info.to_dict()),
                     )
-            await message.answer(msg, reply_markup=MainKeyboard.build_main_kb())
+            await message.answer(msg, reply_markup=MainKeyboard.build_main_kb(user_info.language_code))
             return
         if user_id in admins:
             values = UserModel(
@@ -72,7 +72,7 @@ async def cmd_start(message: Message):
         )
         async with async_session_maker() as session:
             await UserDAO.add(session=session, values=values)
-        msg = start_message(message.from_user.first_name)
+        msg = get_text('start_msg', lang=message.from_user.language_code)
         await message.answer(msg, reply_markup=MainKeyboard.build_main_kb())
         for admin in admins:
             await bot.send_message(
@@ -85,5 +85,5 @@ async def cmd_start(message: Message):
             f"Ошибка при выполнении команды /start для пользователя {message.from_user.id}: {e}"
         )
         await message.answer(
-            "Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте снова позже."
+            get_text('error_somthing_went_wrong', lang=message.from_user.language_code)
         )

@@ -12,7 +12,7 @@ from app.db.dao import SavedMediaFileDAO, UserDAO
 from app.db.database import async_session_maker
 from app.db.models import User,SavedMediaFile
 from app.db.shemas import UserFilterModel, TelegramIDModel, SavedMediaFileModel,SavedMediaFileFilter
-from app.config import bot
+from app.config import bot,settings
 
 receiving_message_router = Router()
 
@@ -120,6 +120,7 @@ async def sending_media():
                 media_files = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter(), limit=10)
             if not media_files:
                 logger.info(f'Нет сохранененных медиа файлов\n Время проверки: {datetime.now().time()}')
+                asyncio.create_task(send_notification_that_has_no_saved_message())
                 await asyncio.sleep(60)
                 continue
             logger.info(f"рассылка началась в :{datetime.now().time()}")
@@ -144,3 +145,17 @@ async def sending_media():
             )
         except Exception as e:
             logger.info(f'При рассылке медиа произошла ошибка: {str(e)}')
+
+notification_lock = asyncio.Lock()
+async def send_notification_that_has_no_saved_message():
+    while True:
+        try:
+            async with notification_lock:
+                async with async_session_maker() as session:
+                    media_files = await SavedMediaFileDAO.find_all(session=session,filters=SavedMediaFileFilter(),limit=1)
+                if media_files:
+                    break
+                await bot.send_message(settings.USER_BOT_ID, "/send_notification_that_has_no_saved_message")
+                await asyncio.sleep(3600)
+        except Exception as e:
+            logger.info(f'При отправке уведомления о том что нет сохраненных медиа произошла ошибка: {str(e)}')

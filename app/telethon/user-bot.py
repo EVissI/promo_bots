@@ -378,6 +378,10 @@ async def send_forwardes_messages():
         await client.send_message(settings.BOT_TAG, "/end_batch")
         await asyncio.sleep(BATCH_INTERVAL)
 
+@client.on(events.NewMessage(pattern="/send_notification_that_has_no_saved_message"))
+async def send_notification_that_has_no_saved_message(event):
+    await client.send_message('me', 'У бота закончились сообщения для рассылки')
+
 async def main():
     await client.run_until_disconnected()
 

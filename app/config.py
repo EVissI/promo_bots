@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     BOT_TOKEN: SecretStr
     ROOT_ADMIN_IDS: List[int]
+    USER_BOT_ID:int
     BOT_TAG: str = 'promotestingsssss_bot'
 
     USER_BOT_API_ID: SecretStr 
@@ -25,8 +26,6 @@ class Settings(BaseSettings):
     DB_URL:PostgresDsn = ''
 
     ADMIN_GROUP_ID:str 
-    PAYMENT_NUMBER: str
-    PAYMENT_AMOUNT: str
     PORT:int = 4566
     model_config = SettingsConfigDict(env_file=f"{BASE_DIR}/.env")
 

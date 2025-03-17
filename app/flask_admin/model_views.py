@@ -1,12 +1,36 @@
 ﻿from flask_admin.contrib.sqla import ModelView
+import flask
+from flask import redirect, url_for
+from wtforms.fields import DateField
+from flask_admin.form import DatePickerWidget
+from datetime import datetime
 
+class AuthModelView(ModelView):
+    def is_accessible(self):
+        return flask.session.get('logged_in')
 
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('login'))
 
-class UserView(ModelView):
+class UserView(AuthModelView):
     can_create = False
     can_delete = False
     edit_modal = True
-    column_list = ['telegram_id', 'username', 'role', 'is_blocked']
+    column_list = ['telegram_id', 'username', 'subscription_end', 'role', 'is_blocked']
+
+    form_overrides = {
+        'subscription_end': DateField
+    }
+    form_args = {
+        'subscription_end': {
+            'widget': DatePickerWidget(),
+            'format': '%d-%m-%Y'
+        }
+    }
+    column_formatters = {
+        'subscription_end': lambda v, c, m, p: m.subscription_end.strftime('%d-%m-%Y') if m.subscription_end else ''
+    }
+    
     column_searchable_list = ['telegram_id','username']
     column_filters = ['role', 'is_blocked']
     column_editable_list = ['role', 'is_blocked']
@@ -17,7 +41,7 @@ class UserView(ModelView):
         'subscription_end': {'readonly': True}
     }
 
-class PromoView(ModelView):
+class PromoView(AuthModelView):
     can_create = True
     can_delete = True
     edit_modal = True
