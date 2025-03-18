@@ -43,7 +43,7 @@ async def cmd_start(message: Message):
                         filters=TelegramIDModel(telegram_id=user_id),
                         values=UserModel.model_validate(user_info.to_dict()),
                     )
-            await message.answer(msg, reply_markup=MainKeyboard.build_main_kb(user_info.language_code))
+            await message.answer(msg, reply_markup=MainKeyboard.build_main_kb(user_info.role,user_info.language_code))
             return
         if user_id in admins:
             values = UserModel(
@@ -54,11 +54,12 @@ async def cmd_start(message: Message):
                 subscription_end=None,
                 is_blocked=False,
                 role=User.Role.admin,
+                language_code=message.from_user.language_code
             )
             async with async_session_maker() as session:
                 await UserDAO.add(session=session, values=values)
             await message.answer(
-                "Привет администрации", reply_markup=MainKeyboard.build_main_kb()
+                "Привет администрации", reply_markup=MainKeyboard.build_main_kb(values.role,values.language_code)
             )
             return
         values = UserModel(
@@ -69,11 +70,12 @@ async def cmd_start(message: Message):
             subscription_end=None,
             is_blocked=False,
             role=User.Role.user,
+            language_code=message.from_user.language_code
         )
         async with async_session_maker() as session:
             await UserDAO.add(session=session, values=values)
         msg = get_text('start_msg', lang=message.from_user.language_code)
-        await message.answer(msg, reply_markup=MainKeyboard.build_main_kb())
+        await message.answer(msg, reply_markup=MainKeyboard.build_main_kb(values.role,values.language_code))
         for admin in admins:
             await bot.send_message(
                 admin,

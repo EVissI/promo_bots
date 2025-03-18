@@ -72,3 +72,7 @@ class SavedMediaFileModel(BaseModel):
 class SavedMediaFileFilter(BaseModel):
     file_id:str = None
     file_media_type:SavedMediaFile.MediaTypes = None
+
+class AdminLoginFilter(BaseModel):
+    login:str = 'admin'
+    password:str = None

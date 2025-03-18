@@ -1,8 +1,8 @@
 ﻿from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import BaseDAO
-from app.db.models import ForwardedMessageError, User,ConnectedEntity,ForwardedMessage,Promocode,SavedMediaFile
-from app.db.shemas import TelegramIDModel, UserFilterModel,ForwardedMessageFilter
+from app.db.models import ForwardedMessageError, User,ConnectedEntity,ForwardedMessage,Promocode,SavedMediaFile,AdminLogin
+from app.db.shemas import TelegramIDModel, UserFilterModel
 
 
 
@@ -85,3 +85,5 @@ class PromocodeDAO(BaseDAO[Promocode]):
 class SavedMediaFileDAO(BaseDAO[SavedMediaFile]):
     model = SavedMediaFile
 
+class AdminLoginDAO(BaseDAO[AdminLogin]):
+    model = AdminLogin

@@ -156,6 +156,6 @@ async def send_notification_that_has_no_saved_message():
                 if media_files:
                     break
                 await bot.send_message(settings.USER_BOT_ID, "/send_notification_that_has_no_saved_message")
-                await asyncio.sleep(3600)
+                await asyncio.sleep(3600*12)
         except Exception as e:
             logger.info(f'При отправке уведомления о том что нет сохраненных медиа произошла ошибка: {str(e)}')

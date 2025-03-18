@@ -1,15 +1,17 @@
 ﻿from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import CommandObject, Command
+from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from app.aiogram.common.messages import get_text
+from app.aiogram.common.states import ChangePassStates
 from app.aiogram.filters.get_user_info import GetUserInfoFilter
 from app.aiogram.keyboards.markup_kb import MainKeyboard
-from app.db.dao import UserDAO, PromocodeDAO
+from app.db.dao import UserDAO, PromocodeDAO, AdminLoginDAO
 from app.db.database import connection
 from app.db.models import User
-from app.db.shemas import TelegramIDModel, PromocodeFilter
+from app.db.shemas import TelegramIDModel, PromocodeFilter, AdminLoginFilter
 from app.config import bot
 
 admin_router = Router()
@@ -67,3 +69,41 @@ async def cmd_send_promo(
             f"При отсылке промокода произошла командой /send_promo произошла ошибка: {str(e)}"
         )
         await message.answer(get_text("error_occurred", lang=user_info.language_code))
+
+
+@admin_router.message(
+    F.text.in_(
+        [
+            MainKeyboard.get_admin_kb_texts("ru").get(
+                "change_password_for_flask_admin"
+            ),
+            MainKeyboard.get_admin_kb_texts("ru").get(
+                "change_password_for_flask_admin"
+            ),
+        ]
+    ),
+    GetUserInfoFilter(),
+)
+async def cmd_change_pass_for_flask_admin(
+    message: Message, state: FSMContext, user_info: User
+):
+    await message.answer(get_text("insert_new_pass", user_info.language_code))
+    await state.set_state(ChangePassStates.waiting_pass)
+
+
+@admin_router.message(F.text, ChangePassStates.waiting_pass,GetUserInfoFilter())
+@connection()
+async def change_admin_pass(message: Message, state: FSMContext,user_info:User, session, **kwargs):
+    acc = await AdminLoginDAO.find_one_or_none(
+        session, AdminLoginFilter()
+    )
+    if acc:
+        await AdminLoginDAO.update(
+            session, AdminLoginFilter(login='admin'), AdminLoginFilter(password=message.text)
+        )
+    else:
+        await AdminLoginDAO.add(
+            session, AdminLoginFilter(login='admin',password=message.text)
+        )
+    await state.clear()
+    await message.answer(get_text("change_pass_successful", user_info.language_code))

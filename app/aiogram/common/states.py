@@ -9,3 +9,6 @@ class TelethonBatchState(StatesGroup):
 class PaymentStates(StatesGroup):
     waiting_for_payment = State()
     waiting_for_screenshot = State()
+
+class ChangePassStates(StatesGroup):
+    waiting_pass = State()

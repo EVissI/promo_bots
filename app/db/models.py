@@ -53,3 +53,7 @@ class SavedMediaFile(Base):
         video_note ="video_note"
     file_id: Mapped[str] = mapped_column(nullable=False)
     file_media_type: Mapped[MediaTypes] = mapped_column(Enum(MediaTypes), nullable=False)
+
+class AdminLogin(Base):
+    login: Mapped[str]
+    password: Mapped[str]

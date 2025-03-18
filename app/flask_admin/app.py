@@ -5,10 +5,9 @@ from app.config import setup_logger
 logger = setup_logger("admin_panel")
 from flask import Flask
 from flask_admin import Admin,AdminIndexView
-from flask_admin.contrib.sqla import ModelView
 from flask_admin.form import SecureForm
 from app.db.database import sync_session
-from app.db.models import User,Promocode
+from app.db.models import AdminLogin, User,Promocode
 from app.flask_admin.model_views import UserView,PromoView
 
 
@@ -18,14 +17,15 @@ app.config['SECRET_KEY'] = 'AJKClasc6x5z1i2S3Kx3zcdo23'
 app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
 
-USERNAME = "admin"
-LOGIN = "password"
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == USERNAME and password == LOGIN:
+        with sync_session() as session:
+            acc = session.query(AdminLogin).first()
+        if username == acc.login and password == acc.password:
             flask.session['logged_in'] = True
             return redirect('/admin')
         else:

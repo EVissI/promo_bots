@@ -19,7 +19,12 @@ user_router = Router()
 
 
 @user_router.message(
-    F.text.in_([MainKeyboard.get_user_kb_texts("ru").get("activate_promo"),MainKeyboard.get_user_kb_texts("en").get("activate_promo")])
+    F.text.in_(
+        [
+            MainKeyboard.get_user_kb_texts("ru").get("activate_promo"),
+            MainKeyboard.get_user_kb_texts("en").get("activate_promo"),
+        ]
+    )
 )
 async def cmd_activate_promo(message: Message, state: FSMContext):
     await message.answer("Введите промокод", reply_markup=del_kbd)
@@ -41,7 +46,9 @@ async def process_activate_promo(message: Message, state: FSMContext):
         if not promo_info:
             await message.answer(
                 get_text("promocode_is_not_found", lang=user_info.language_code),
-                reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+                reply_markup=MainKeyboard.build_main_kb(
+                    user_info.role, user_info.language_code
+                ),
             )
             await state.clear()
             return
@@ -49,7 +56,9 @@ async def process_activate_promo(message: Message, state: FSMContext):
         if user_info.promo_code == promo_info.promo_name:
             await message.answer(
                 get_text("promocode_is_was_used", lang=user_info.language_code),
-                reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+                reply_markup=MainKeyboard.build_main_kb(
+                    user_info.role, user_info.language_code
+                ),
             )
             await state.clear()
             return
@@ -84,7 +93,9 @@ async def process_activate_promo(message: Message, state: FSMContext):
                 lang=user_info.language_code,
                 end_date=end_date.date(),
             ),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
         await state.clear()
         for admin in admins:
@@ -109,13 +120,20 @@ async def process_activate_promo(message: Message, state: FSMContext):
         )
         await message.answer(
             get_text("error_somthing_went_wrong", lang=message.from_user.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
         await state.clear()
 
 
 @user_router.message(
-    F.text.in_([MainKeyboard.get_user_kb_texts("ru").get("check_sub"),MainKeyboard.get_user_kb_texts("en").get("check_sub")])
+    F.text.in_(
+        [
+            MainKeyboard.get_user_kb_texts("ru").get("check_sub"),
+            MainKeyboard.get_user_kb_texts("en").get("check_sub"),
+        ]
+    )
 )
 async def check_subscription(message: Message, state: FSMContext):
     try:
@@ -128,7 +146,9 @@ async def check_subscription(message: Message, state: FSMContext):
             if not user_info.subscription_end:
                 await message.answer(
                     get_text("have_no_sub", lang=user_info.language_code),
-                    reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+                    reply_markup=MainKeyboard.build_main_kb(
+                        user_info.role, user_info.language_code
+                    ),
                 )
                 return
 
@@ -138,7 +158,9 @@ async def check_subscription(message: Message, state: FSMContext):
             if days_left < 0:
                 await message.answer(
                     get_text("sub_is_end", lang=user_info.language_code),
-                    reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+                    reply_markup=MainKeyboard.build_main_kb(
+                        user_info.role, user_info.language_code
+                    ),
                 )
             else:
                 await message.answer(
@@ -148,7 +170,9 @@ async def check_subscription(message: Message, state: FSMContext):
                         days_left=days_left,
                         end_date=user_info.subscription_end.date(),
                     ),
-                    reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+                    reply_markup=MainKeyboard.build_main_kb(
+                        user_info.role, user_info.language_code
+                    ),
                 )
 
     except Exception as e:
@@ -157,7 +181,9 @@ async def check_subscription(message: Message, state: FSMContext):
         )
         await message.answer(
             get_text("error_somthing_went_wrong", lang=message.from_user.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
 
@@ -186,7 +212,9 @@ async def process_payment(message: Message, state: FSMContext, user_info: User):
         logger.error(f"Ошибка при запросе оплаты: {e}")
         await message.answer(
             get_text("error_somthing_went_wrong", user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
 
@@ -204,7 +232,9 @@ async def payment_confirmation(
         logger.error(f"Ошибка при подтверждении оплаты: {e}")
         await callback.message.answer(
             get_text("error_somthing_went_wrong", user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
 
@@ -220,14 +250,18 @@ async def process_payment_screenshot(
         )
         await message.answer(
             get_text("ty_yr_payment_was_successfully", lang=user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
         await state.clear()
     except Exception as e:
         logger.error(f"Ошибка при обработке скриншота: {e}")
         await message.answer(
             get_text("error_somthing_went_wrong", user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
 
@@ -288,14 +322,18 @@ async def cmd_activate_promo(message: Message, command: CommandObject, user_info
                 lang=user_info.language_code,
                 end_date=end_date.date(),
             ),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
     except Exception as e:
         logger.error(f"Ошибка при активации промкода коммандой: {e}")
         await message.answer(
             get_text("error_somthing_went_wrong", user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
 
@@ -318,7 +356,9 @@ async def change_language(message: Message, user_info: User):
         logger.error(f"Ошибка при смене языка: {e}")
         await message.answer(
             get_text("error_somthing_went_wrong", lang=user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
 
@@ -337,12 +377,16 @@ async def change_language_callback(
             )
         await query.message.answer(
             get_text("language_changed", lang=user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
 
     except Exception as e:
         logger.error(f"Ошибка при смене языка: {e}")
         await query.message.answer(
             get_text("error_somthing_went_wrong", lang=user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(user_info.language_code),
+            reply_markup=MainKeyboard.build_main_kb(
+                user_info.role, user_info.language_code
+            ),
         )
