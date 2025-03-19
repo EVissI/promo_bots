@@ -1,4 +1,5 @@
 ﻿import asyncio
+from datetime import datetime, timezone
 import flask
 from flask import Flask, request, redirect, url_for, render_template
 from app.config import setup_logger
@@ -27,6 +28,7 @@ def login():
             acc = session.query(AdminLogin).first()
         if username == acc.login and password == acc.password:
             flask.session['logged_in'] = True
+            flask.session['login_time'] = datetime.now()
             return redirect('/admin')
         else:
             return render_template('login.html', error='Invalid credentials!')  # передаем ошибку в шаблон
@@ -36,6 +38,15 @@ def login():
 def check_login():
     if not flask.session.get('logged_in') and request.endpoint not in ['login', 'static']:
         return redirect(url_for('login'))
+    elif flask.session.get('logged_in'):
+        with sync_session() as db_session:
+            acc = db_session.query(AdminLogin).first()
+            if acc:
+                login_time = flask.session.get('login_time')
+                acc.updated_at = acc.updated_at.replace(tzinfo=timezone.utc)
+                if login_time is None or login_time < acc.updated_at:
+                    flask.session.clear()
+                    return redirect(url_for('login'))
 
 
 @app.route('/logout')
