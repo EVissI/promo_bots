@@ -1,6 +1,7 @@
 ﻿services:
   telegram_bot:
     build: .
+    restart: always
     container_name: promo_bot
     command: /bin/sh -c "alembic upgrade head && python -m app.aiogram.main"
     ports:
@@ -12,6 +13,7 @@
     
   telegram_user_bot:
     build: .
+    restart: always
     container_name: promo_user_bot
     command:  python -m app.telethon.user-bot
     ports:
@@ -24,6 +26,7 @@
       
   flask_admin:
     build: .
+    restart: always
     container_name: flask_admin
     command:  python -m app.flask_admin.app 
     ports:
