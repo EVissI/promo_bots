@@ -63,6 +63,7 @@ TEXTS_TRANSLITE ={
         'error_user_not_found':'Error: user not found',
         'error_promo_not_found':'Error: promo not found',
         'error_somthing_went_wrong':'Something went wrong',
+        'oplata_temporarily':'Regarding the subscription, contact the administrator https://t.me/hc_et'
     }
 
 }
