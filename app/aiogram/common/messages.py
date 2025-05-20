@@ -20,7 +20,7 @@ TEXTS_TRANSLITE ={
         'sub_is_end':'Ваша подписка закончилась',
         'sub_is_active':"Ваша подписка активна еще {days_left} дней\nДата окончания: {end_date}",
         'promocode_is_not_found':'Промокод не найден',
-        'promocode_is_was_used':'Промокод уже был использован',
+        'promocode_is_was_used':'Промокод уже был использован', 
         'promocode_used_successfully':'Промокод успешно активирован, подписка кончится: {end_date}',
         'payment_form': "Для оплаты переведите по номеру {phone_number}: {payment_amount}₽",
         'payment_check_pls' : 'Пришлите чек оплаты, пожалуйста',
@@ -35,6 +35,7 @@ TEXTS_TRANSLITE ={
         'error_user_not_found':'Ошибка: не найден юзер',
         'error_promo_not_found':'Ошибка: не найден промокод',
         'error_somthing_went_wrong':'Что-то пошло не так',
+        'oplata_temporarily':'По поводу подписки обращайтесь к администратору https://t.me/hc_et'
     },
     'en':{
         'start_msg':"Привет! Я бот для покупки промокодов. Для начала работы нажмите кнопку 'Начать'",

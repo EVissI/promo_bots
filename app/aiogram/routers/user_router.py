@@ -197,25 +197,26 @@ async def check_subscription(message: Message, state: FSMContext):
     GetUserInfoFilter(),
 )
 async def process_payment(message: Message, state: FSMContext, user_info: User):
-    try:
-        await message.answer(
-            get_text(
-                "payment_form",
-                user_info.language_code,
-                phone_number="+7 999 999 99 99",
-                payment_amount="2000",
-            ),
-            reply_markup=oplata_kb(),
-        )
-        await state.set_state(PaymentStates.waiting_for_payment)
-    except Exception as e:
-        logger.error(f"Ошибка при запросе оплаты: {e}")
-        await message.answer(
-            get_text("error_somthing_went_wrong", user_info.language_code),
-            reply_markup=MainKeyboard.build_main_kb(
-                user_info.role, user_info.language_code
-            ),
-        )
+    await message.answer(get_text('oplata_temporarily', lang=user_info.language_code))
+    # try:
+    #     await message.answer(
+    #         get_text(
+    #             "payment_form",
+    #             user_info.language_code,
+    #             phone_number="+7 999 999 99 99",
+    #             payment_amount="2000",
+    #         ),
+    #         reply_markup=oplata_kb(),
+    #     )
+    #     await state.set_state(PaymentStates.waiting_for_payment)
+    # except Exception as e:
+    #     logger.error(f"Ошибка при запросе оплаты: {e}")
+    #     await message.answer(
+    #         get_text("error_somthing_went_wrong", user_info.language_code),
+    #         reply_markup=MainKeyboard.build_main_kb(
+    #             user_info.role, user_info.language_code
+    #         ),
+    #     )
 
 
 @user_router.callback_query(F.data == "payment_done", GetUserInfoFilter())
